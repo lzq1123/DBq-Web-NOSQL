@@ -1,0 +1,213 @@
+body {
+    background-color: whitesmoke;
+}
+
+.carousel-item {
+	height: 100vh;
+	min-height: 300px;
+	background: no-repeat center center scroll;
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+}
+.carousel-caption {
+	bottom: 270px;
+}
+.carousel-caption h5 {
+	font-size: 45px;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	margin-top: 25px;
+}
+.carousel-caption p {
+	width: 75%;
+	margin: auto;
+	font-size: 18px;
+	line-height: 1.9;
+}
+.navbar-light .navbar-brand {
+	color: #fff;
+	font-size: 25px;
+	text-transform: uppercase;
+	font-weight: bold;
+	letter-spacing: 2px;
+}
+.navbar-light .navbar-nav .active>.nav-link, .navbar-light .navbar-nav .nav-link.active, .navbar-light .navbar-nav .nav-link.show, .navbar-light .navbar-nav .show>.nav-link {
+	color: #fff;
+}
+.navbar-light .navbar-nav .nav-link {
+	color: #fff;
+}
+.navbar-toggler {
+	background: #fff;
+}
+.navbar-nav {
+	text-align: center;
+}
+.nav-link {
+	padding: .2rem 1rem;
+}
+.nav-link.active, .nav-link:focus {
+	color: #fff;
+}
+.navbar-toggler {
+	padding: 1px 5px;
+	font-size: 18px;
+	line-height: 0.3;
+}
+.navbar-light .navbar-nav .nav-link:focus, .navbar-light .navbar-nav .nav-link:hover {
+	color: #fff;
+}
+
+.navbar-light .navbar-brand:hover, 
+.navbar-light .navbar-nav .nav-link:hover {
+    color: #00FFFF;
+}
+
+.navbar-light .navbar-brand:hover, 
+.navbar-light .navbar-brand:focus, 
+.navbar-light .navbar-brand:active,
+.navbar-light .navbar-nav .nav-link:hover,
+.navbar-light .navbar-nav .nav-link:focus,
+.navbar-light .navbar-nav .nav-link:active {
+    color:#00FFFF;
+}
+
+.hot-events {
+    text-align: left; 
+    padding: 20px 0;
+    
+}
+
+h4 {
+    font-weight: 700;
+}
+
+.event-card {
+    position: relative;
+    cursor: pointer;
+    display:inline-block;
+    margin-top:10px;
+    margin-bottom: 18px;
+    border-radius: 2px; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+    overflow: hidden;
+}
+
+
+.event-card img {
+    width: 350px;
+    height: 160px;
+}
+
+.event-card .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(128, 128, 128, 0.7); /* Grayish tint */
+    color: white;
+    font-size: 24px;
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease;
+}
+
+.event-card:hover .overlay {
+    opacity: 1;
+}
+
+.overlay span {
+    font-size: 32px;
+}
+.more-events-btn {
+    display: block;
+    width: 100%;
+    margin: 20px auto; 
+    padding: 10px;
+    text-align: center;
+    background-color: white;
+    color: darkblue;
+    font-weight: 600;
+    border: 1px solid darkblue;
+    text-decoration: none; 
+    font-size: 16px;
+    transition: background-color 0.3s, color 0.3s;
+    border-radius: 2px; 
+}
+
+.more-events-btn:hover, .more-events-btn:focus {
+    background-color: darkblue;
+    color: white; 
+}
+
+
+/* Venue Cards Styling */
+.venue-card {
+    position: relative;
+    cursor: pointer;
+    display: inline-block;
+    margin-top: 10px;
+    margin-bottom: 18px;
+    border-radius: 2px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.venue-card img {
+    width: 100%;  /* Ensure images cover the full width of the card */
+    height: auto; /* Maintain the aspect ratio of the images */
+    display: block; /* Remove any space below the image */
+}
+
+.venue-card .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(128, 128, 128, 0.7); /* Grayish tint */
+    color: white;
+    font-size: 24px;
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease;
+}
+
+.venue-card:hover .overlay {
+    opacity: 1;
+}
+
+/* More Venues Button Styling */
+.more-venues-btn {
+    display: block;
+    width: 100%;
+    margin: 20px auto;
+    padding: 10px;
+    text-align: center;
+    background-color: white;
+    color: darkblue;
+    font-weight: 600;
+    border: 1px solid darkblue;
+    text-decoration: none;
+    font-size: 16px;
+    transition: background-color 0.3s, color 0.3s;
+    border-radius: 2px;
+}
+
+.more-venues-btn:hover, .more-venues-btn:focus {
+    background-color: darkblue;
+    color: white;
+}
+
+
+.venue {
+    text-align: left; 
+    padding: 20px 0; 
+}
