@@ -6,48 +6,49 @@
     <title>TicketGrab</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
 </head>
 <body>
-
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
-		<div class="container">
-			<a class="navbar-brand" href="#">
+        <div class="container">
+            <a class="navbar-brand" href="#">
                 <img src="static/images/logo.png" alt="Logo" style="height: 25px; margin-bottom:6px;"> TicketGrab
             </a>
-            <button aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler" data-target="#navbarSupportedContent" data-toggle="collapse" type="button">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
-			<div class="collapse navbar-collapse" id="navbarSupportedContent">
-				<ul class="navbar-nav ml-auto">
-					<li class="nav-item active">
-						<a class="nav-link" href="#">Home</a>
-					</li>
+    
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
                     <li class="nav-item">
-						<a class="nav-link" href="#">About Us</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="#">Events</a>
-					</li>
+                        <a class="nav-link" href="#">About Us</a>
+                    </li>
                     <li class="nav-item">
-						<a class="nav-link" href="#">Venue</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="#">Register</a>
-					</li>
+                        <a class="nav-link" href="/event">Events</a>
+                    </li>
                     <li class="nav-item">
-						<a class="nav-link" href="#">Sign In</a>
-					</li>
-				</ul>
-			</div>
-		</div>
-	</nav>
+                        <a class="nav-link" href="#">Venue</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#"><i class="fa-regular fa-circle-user"></i> Register/Sign in</a>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
 	<div class="carousel slide" data-ride="carousel" id="carouselExampleIndicators">
 		<ol class="carousel-indicators">
 			<li class="active" data-slide-to="0" data-target="#carouselExampleIndicators"></li>
 			<li data-slide-to="1" data-target="#carouselExampleIndicators"></li>
 			<li data-slide-to="2" data-target="#carouselExampleIndicators"></li>
 		</ol>
+        
 		<div class="carousel-inner">
 			<div class="carousel-item active">
 				<img alt="First slide" class="d-block w-100" src="static/images/1.jpg">
@@ -76,7 +77,7 @@
         <a class="carousel-control-prev" data-slide="prev" href="#carouselExampleIndicators" role="button"><span aria-hidden="true" class="carousel-control-prev-icon"></span> <span class="sr-only">Previous</span></a>
         <a class="carousel-control-next" data-slide="next" href="#carouselExampleIndicators" role="button"><span aria-hidden="true" class="carousel-control-next-icon"></span> <span class="sr-only">Next</span></a>
 	</div>
-
+<main>
     <div class="container hot-events">
         <div class="row">
             <div class="col-12">
@@ -121,7 +122,7 @@
                 </div>
             </div>
             <div class="col-12">
-                <a href="events.html" class="more-events-btn">More Events</a>
+                <a href="event" class="more-events-btn">More Events</a>
             </div>
         </div>
     </div>
@@ -178,12 +179,44 @@
         </div>
     </div>
 </div>
+</main>
+
+
+<footer class="footer" role="contentinfo" itemscope itemtype="http://schema.org/WPFooter">
+    <div class="social" role="navigation" aria-labelledby="social-heading">
+        <h3 id="social-heading" class="sr-only">Follow us on social media</h3>
+        <a aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+        <a aria-label="Mastodon"><i class="fa-brands fa-mastodon"></i></a>
+        <a aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+    </div>
+    <hr class="footer-break">
+    <ul class="footer-links" role="navigation" aria-labelledby="footer-links-heading">
+
+    <p class="copyright">© 2024 TicketGrab</p>
+</footer>
+
 
 
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+
+
+    <script>
+        window.onscroll = function() {
+            var navbar = document.querySelector('.navbar');
+            if (window.scrollY > 200) { 
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        };
+    </script>
+
+
 </body>
+
 </html>
 
