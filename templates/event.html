@@ -8,46 +8,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
 </head>
-<style>
-    .navbar {
-        background-color: black;
-    }
-    
-    
-    
-    </style>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <img src="static/images/logo.png" alt="Logo" style="height: 25px; margin-bottom:6px;"> TicketGrab
-            </a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-    
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item active">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">About Us</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/event">Events</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/venue">Venue</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/registersignup"><i class="fa-regular fa-circle-user"></i> Register/Sign in</a>
-                    </li>
-
-                </ul>
-            </div>
-        </div>
-    </nav>
+   <!-- Include Navigation -->
+   {% include 'nav.html' %}
     <main style="margin-top: 80px;">
         <div class="container">
             <div class="row justify-content-between align-items-center mb-4">
@@ -92,7 +55,7 @@
                     </div>
                 </div>
             </div>
-            <!-- Pagination -->
+
             <nav aria-label="Event pagination" class="mt-4">
                 <ul class="pagination justify-content-center">
                     <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1">Previous</a></li>
@@ -104,16 +67,7 @@
             </nav>
         </div>
     </main>
-    <footer class="footer" role="contentinfo" itemscope itemtype="http://schema.org/WPFooter">
-        <div class="social" role="navigation" aria-labelledby="social-heading">
-            <h3 id="social-heading" class="sr-only">Follow us on social media</h3>
-            <a aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
-            <a aria-label="Mastodon"><i class="fa-brands fa-mastodon"></i></a>
-            <a aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-        </div>
-        <hr class="footer-break">
-        <ul class="footer-links" role="navigation" aria-labelledby="footer-links-heading">
-    
-        <p class="copyright">© 2024 TicketGrab</p>
-    </footer>
+<!-- Include Footer -->
+{% include 'footer.html' %}
+
     </body>

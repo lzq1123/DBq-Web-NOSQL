@@ -9,39 +9,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <img src="static/images/logo.png" alt="Logo" style="height: 25px; margin-bottom:6px;"> TicketGrab
-            </a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-    
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item active">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">About Us</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/event">Events</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Venue</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fa-regular fa-circle-user"></i> Register/Sign in</a>
-                    </li>
+<style>
 
-                </ul>
-            </div>
-        </div>
-    </nav>
-    
+.navbar {
+        background-color: transparent;
+    }
+
+</style>
+<body>
+   <!-- Include Navigation -->
+   {% include 'nav.html' %}
 	<div class="carousel slide" data-ride="carousel" id="carouselExampleIndicators">
 		<ol class="carousel-indicators">
 			<li class="active" data-slide-to="0" data-target="#carouselExampleIndicators"></li>
@@ -116,10 +93,13 @@
                     <div class="overlay"><span>→</span></div>
                 </div>
             </div>            <div class="col-md-4">
-                <div class="event-card">
-                    <img src="static/images/artist3.jpg" alt="Event 3" class="event-image">
-                    <div class="overlay"><span>→</span></div>
-                </div>
+                <a href="/ticket">
+                    <div class="event-card">
+                        <img src="static/images/artist3.jpg" alt="Event 3" class="event-image">
+                        <div class="overlay"><span>→</span></div>
+                    </div>
+                </a>
+                
             </div>
             <div class="col-12">
                 <a href="event" class="more-events-btn">More Events</a>
@@ -128,72 +108,69 @@
     </div>
     
     <!-- Venue Section -->
-<div class="container venue">
-    <div class="row">
-        <div class="col-12">
-            <div class="venue-header">
-                <h4>Top Venues Picks</h4>
+    <div class="container venue">
+        <div class="row">
+            <div class="col-12">
+                <div class="venue-header">
+                    <h4>Top Venues Picks</h4>
+                </div>
+            </div>
+    
+            <div class="col-md-2">
+                <a href="/venueinfo">
+                    <div class="venue-card">
+                        <img src="static/images/venue1.jpg" alt="Venue 1" class="venue-image">
+                        <div class="overlay"><span>→</span></div>
+                    </div>
+                </a>
+            </div>
+    
+
+            <div class="col-md-2">
+                <div class="venue-card">
+                    <img src="static/images/venue2.jpg" alt="Venue 2" class="venue-image">
+                    <div class="overlay"><span>→</span></div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="venue-card">
+                    <img src="static/images/venue3.jpg" alt="Venue 3" class="venue-image">
+                    <div class="overlay"><span>→</span></div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="venue-card">
+                    <img src="static/images/venue4.jpg" alt="Venue 4" class="venue-image">
+                    <div class="overlay"><span>→</span></div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="venue-card">
+                    <img src="static/images/venue5.jpg" alt="Venue 5" class="venue-image">
+                    <div class="overlay"><span>→</span></div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="venue-card">
+                    <img src="static/images/venue6.jpg" alt="Venue 6" class="venue-image">
+                    <div class="overlay"><span>→</span></div>
+                </div>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="venue-card">
-                <img src="static/images/venue1.jpg" alt="Venue 1" class="venue-image">
-                <div class="overlay"><span>→</span></div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="venue-card">
-                <img src="static/images/venue2.jpg" alt="Venue 2" class="venue-image">
-                <div class="overlay"><span>→</span></div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="venue-card">
-                <img src="static/images/venue3.jpg" alt="Venue 3" class="venue-image">
-                <div class="overlay"><span>→</span></div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="venue-card">
-                <img src="static/images/venue4.jpg" alt="Venue 4" class="venue-image">
-                <div class="overlay"><span>→</span></div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="venue-card">
-                <img src="static/images/venue5.jpg" alt="Venue 5" class="venue-image">
-                <div class="overlay"><span>→</span></div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="venue-card">
-                <img src="static/images/venue6.jpg" alt="Venue 6" class="venue-image">
-                <div class="overlay"><span>→</span></div>
+    
+
+        <div class="row">
+            <div class="col-12">
+                <a href="/venue" class="more-venues-btn">More Venues</a>
             </div>
         </div>
     </div>
-    <!-- More Venues Button -->
-    <div class="row">
-        <div class="col-12">
-            <a href="venues.html" class="more-venues-btn">More Venues</a>
-        </div>
-    </div>
-</div>
+    
 </main>
 
 
-<footer class="footer" role="contentinfo" itemscope itemtype="http://schema.org/WPFooter">
-    <div class="social" role="navigation" aria-labelledby="social-heading">
-        <h3 id="social-heading" class="sr-only">Follow us on social media</h3>
-        <a aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
-        <a aria-label="Mastodon"><i class="fa-brands fa-mastodon"></i></a>
-        <a aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-    </div>
-    <hr class="footer-break">
-    <ul class="footer-links" role="navigation" aria-labelledby="footer-links-heading">
-
-    <p class="copyright">© 2024 TicketGrab</p>
-</footer>
+<!-- Include Footer -->
+{% include 'footer.html' %}
 
 
 

@@ -45,5 +45,23 @@ def venue():
 def registersignup():
     return render_template('registersignup.html')
 
+@app.route('/myticket')
+def myticket():
+        return render_template('myticket.html')
+
+@app.route('/aboutus')
+def aboutus():
+    return render_template('aboutus.html')
+
+@app.route('/ticket')
+def ticket():
+    return render_template('ticket.html')
+
+
+@app.route('/venueinfo')
+def venueinfo():
+    return render_template('venueinfo.html')
+
+
 if __name__ == "__main__":
     app.run(debug=True)

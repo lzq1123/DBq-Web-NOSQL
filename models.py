@@ -77,3 +77,12 @@ class Queue(db.Model):
     EventID = db.Column(db.Integer, db.ForeignKey('Event.EventID'))
     User = db.relationship('Users', backref='QueueEntries')
     Event = db.relationship('Event', backref='QueueEntries')
+
+class Image(db.Model):
+    __tablename__ = 'Image'
+    ImageID = db.Column(db.Integer, primary_key=True)
+    Width = db.Column(db.Integer, nullable=False)
+    Height = db.Column(db.Integer, nullable=False)
+    Resolution = db.Column(db.String(50), nullable=False)  # Example format: '1920x1080'
+    LocationID = db.Column(db.Integer, db.ForeignKey('Location.LocationID'), nullable=True)
+    EventID = db.Column(db.Integer, db.ForeignKey('Event.EventID'), nullable=True)

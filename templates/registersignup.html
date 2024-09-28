@@ -9,11 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
 </head>
 <style>
-
-    .navbar {
-        background-color: black;
-    }
-
 *,
 *:before,
 *:after {
@@ -23,8 +18,17 @@
 }
 
 body {
-    font-family: 'Open Sans', Helvetica, Arial, sans-serif;
-    background: #ffffff;
+    background: black;
+}
+
+body {
+    background-image: url('{{ url_for('static', filename='images/register.jpg') }}');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh; 
+    margin: 0;
+    font-family: Arial, sans-serif;
 }
 
 input,
@@ -32,7 +36,6 @@ button {
     border: none;
     outline: none;
     background: none;
-    font-family: 'Open Sans', Helvetica, Arial, sans-serif;
 }
 
 .tip {
@@ -49,7 +52,6 @@ button {
     height: 550px;
     margin: 0 auto 100px;
     background: #fff;
-    box-shadow: -10px -10px 15px rgba(255, 255, 255, 0.3), 10px 10px 15px rgba(70, 70, 70, 0.15), inset -10px -10px 15px rgba(255, 255, 255, 0.3), inset 10px 10px 15px rgba(70, 70, 70, 0.15);
 }
 
 .form {
@@ -71,7 +73,7 @@ button {
     width: 900px;
     height: 100%;
     padding-left: 260px;
-    background: #fff;
+    background: whitesmoke;
     -webkit-transition: -webkit-transform 1.2s ease-in-out;
     transition: -webkit-transform 1.2s ease-in-out;
     transition: transform 1.2s ease-in-out;
@@ -249,7 +251,7 @@ label {
 
 label span {
     font-size: 12px;
-    color: #cfcfcf;
+    color: black;
     text-transform: uppercase;
 }
 
@@ -263,17 +265,10 @@ input {
     text-align: center;
 }
 
-.forgot-pass {
-    margin-top: 15px;
-    text-align: center;
-    font-size: 12px;
-    color: #cfcfcf;
-}
-
 .submit {
     margin-top: 40px;
     margin-bottom: 20px;
-    background: cyan;
+    background: black;
     text-transform: uppercase;
 }
 
@@ -314,37 +309,8 @@ input {
     
     </style>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <img src="static/images/logo.png" alt="Logo" style="height: 25px; margin-bottom:6px;"> TicketGrab
-            </a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-    
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item active">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">About Us</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/event">Events</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Venue</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fa-regular fa-circle-user"></i> Register/Sign in</a>
-                    </li>
-
-                </ul>
-            </div>
-        </div>
-    </nav>
+   <!-- Include Navigation -->
+   {% include 'nav.html' %}
 <main style="margin-top:60px;">
     <br>
     <br>
@@ -359,7 +325,6 @@ input {
                     <span>Password</span>
                     <input type="password" />
                 </label>
-                <p class="forgot-pass">Forgot password?</p>
                 <button type="button" class="submit">Sign In</button>
              
             </div>
@@ -406,16 +371,7 @@ input {
 
 
 </main>
-<footer class="footer" role="contentinfo" itemscope itemtype="http://schema.org/WPFooter">
-    <div class="social" role="navigation" aria-labelledby="social-heading">
-        <h3 id="social-heading" class="sr-only">Follow us on social media</h3>
-        <a aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
-        <a aria-label="Mastodon"><i class="fa-brands fa-mastodon"></i></a>
-        <a aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-    </div>
-    <hr class="footer-break">
-    <ul class="footer-links" role="navigation" aria-labelledby="footer-links-heading">
+<!-- Include Footer -->
+{% include 'footer.html' %}
 
-    <p class="copyright">© 2024 TicketGrab</p>
-</footer>
 </body>

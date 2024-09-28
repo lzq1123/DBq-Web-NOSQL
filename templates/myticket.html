@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketGrab</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <style>
+        .tab-container {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .tab {
+            display: inline-block;
+            padding: 10px 20px;
+            border: 1px solid #007bff;
+            border-radius: 5px 5px 0 0;
+            background-color: #ffffff;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .tab.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .tab-line {
+            border-bottom: 2px solid lightgray;
+            margin-bottom: 10px;
+        }
+        .table th, .table td {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Include Navigation -->
+    {% include 'nav.html' %}
+    <main style="margin-top: 80px;">
+        <div class="container">
+            <h3 class="text-center mb-4">My Tickets</h3>
+            <div class="tab-container">
+                <div class="tab active" id="upcoming-events-btn">Upcoming Events</div>
+                <div class="tab" id="finished-events-btn">Finished Events</div>
+                <div class="tab-line"></div>
+            </div>
+
+            <table class="table table-striped" id="events-table">
+                <thead>
+                    <tr>
+                        <th>Order No.</th>
+                        <th>Order Time</th>
+                        <th>Order Name</th>
+                        <th>Amount of Tickets</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="upcoming-event">
+                        <td>14269324</td>
+                        <td>15-05-2024 12:41pm</td>
+                        <td>Olivia Rodrigo - GUTS World Tour</td>
+                        <td>2</td>
+                    </tr>
+
+                    <tr class="finished-event d-none">
+                        <td>14269325</td>
+                        <td>10-01-2023 08:00pm</td>
+                        <td>Ed Sheeran - Divide Tour</td>
+                        <td>1</td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+    </main>
+    <!-- Include Footer -->
+    {% include 'footer.html' %}
+
+    <script>
+        document.getElementById('upcoming-events-btn').addEventListener('click', function() {
+            document.querySelectorAll('.finished-event').forEach(row => row.classList.add('d-none'));
+            document.querySelectorAll('.upcoming-event').forEach(row => row.classList.remove('d-none'));
+            this.classList.add('active');
+            document.getElementById('finished-events-btn').classList.remove('active');
+        });
+
+        document.getElementById('finished-events-btn').addEventListener('click', function() {
+            document.querySelectorAll('.upcoming-event').forEach(row => row.classList.add('d-none'));
+            document.querySelectorAll('.finished-event').forEach(row => row.classList.remove('d-none'));
+            this.classList.add('active');
+            document.getElementById('upcoming-events-btn').classList.remove('active');
+        });
+    </script>
+</body>
+</html>

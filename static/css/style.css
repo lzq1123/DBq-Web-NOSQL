@@ -109,17 +109,15 @@ main {
     line-height: 1.9;
 }
 
-/* Initially transparent navbar */
 .navbar {
     position: fixed;
     top: 0;
     width: 100%;
     z-index: 1000;
-    background-color: transparent; /* Initial transparent background */
-    transition: background-color 0.5s ease; /* Smooth transition */
+    background-color: black; 
+    transition: background-color 0.5s ease
 }
 
-/* When scrolled */
 .navbar.scrolled {
     background-color: black !important;
     transition: background-color 0.5s ease;
