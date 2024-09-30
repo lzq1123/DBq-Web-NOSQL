@@ -47,31 +47,54 @@ def home():
 
 @app.route('/event')
 def event():
+    search_query = request.args.get('search', '').lower()  # Get search query from the request, default is empty
+    page = request.args.get('page', 1, type=int)  # Get the current page number from the request, default is 1
+    events_per_page = 9  # Customize how many events per page you'd like to show
+
     events_by_month_year = {}
     preferred_width = 1920
 
     # Fetch all events and sort them by year and day within each year
     events = Event.query.options(joinedload(Event.image)).order_by(Event.EventDate).all()
 
-    for event in events:
+    # Filter events by search query if it's provided
+    if search_query:
+        events = [event for event in events if search_query in event.EventName.lower()]
+
+    # Paginate the filtered events
+    total_events = len(events)
+    total_pages = (total_events + events_per_page - 1) // events_per_page
+    start_index = (page - 1) * events_per_page
+    end_index = start_index + events_per_page
+    paginated_events = events[start_index:end_index]
+
+    # Group events by month and year
+    for event in paginated_events:
         # If there are images associated with the event, choose one closest to the preferred width
         if event.image:
             event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
         else:
             event.preferred_image = None  # Set to None if no images exist
 
+        # Group events by month and year
         month_year = f"{calendar.month_name[event.EventDate.month]} {event.EventDate.year}"
         if month_year not in events_by_month_year:
             events_by_month_year[month_year] = []
         events_by_month_year[month_year].append(event)
 
-    current_year = datetime.now().year
+    # Sort months/years so that they appear correctly
     sorted_month_years = sorted(
         events_by_month_year.keys(),
-        key=lambda x: (int(x.split(' ')[1]), -1 if int(x.split(' ')[1]) == current_year else 0)
+        key=lambda x: (int(x.split(' ')[1]), -1 if int(x.split(' ')[1]) == datetime.now().year else 0)
     )
 
-    return render_template('event.html', events_by_month_year={key: events_by_month_year[key] for key in sorted_month_years})
+    return render_template(
+        'event.html',
+        events_by_month_year={key: events_by_month_year[key] for key in sorted_month_years},
+        search_query=search_query,  # Pass the search query to the template to preserve input in the search box
+        current_page=page,  # Pass the current page to the template for pagination
+        total_pages=total_pages  # Pass total pages to the template to create pagination controls
+    )
 
 @app.route('/venue')
 def venue():
@@ -178,29 +201,34 @@ def aboutus():
 
 @app.route('/ticket/<event_id>')
 def ticket(event_id):
-    event_with_images = []
     error_message = None
     preferred_width = 1920
 
+    # Get user info from session
     user_id = session.get('user_id')
     user = Users.query.get(user_id)
+    
+    # Fetch event details based on event_id
     event = Event.query.options(joinedload(Event.image)).filter_by(EventID=event_id).first()
+
     if not event:
         error_message = "Event not found!"
         return redirect(url_for('landing'))
 
+    # Choose preferred image based on width
     if event.image:
-            event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
+        event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
     else:
         event.preferred_image = None
 
+    # Prepare event and user information for the template
     event_with_images = {
         'EventName': event.EventName,
         'EventDate': event.EventDate.strftime('%d %b %Y'),
         'ImageURL': event.preferred_image.URL if event.preferred_image else url_for('static', filename='images/default.jpg')
     }
 
-    return render_template('ticket.html', error_message=error_message, event=event_with_images, user=user)
+    return render_template('ticket.html', event=event_with_images, user=user)
 
 @app.route('/event/<event_id>/purchase', methods=['GET', 'POST'])
 def purchase_tickets(event_id):
