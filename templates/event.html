@@ -25,36 +25,31 @@
                 </div>
             </div>
             <!-- Event Sections -->
-            <div class="month-section" >
-                <div class="month-header"><i class="fa-regular fa-calendar-days"></i> &nbsp;October 2024</div>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="event-card">
-                            <img src="static/images/theatre1.jpg" alt="Event 1" class="event-image">
-                            <div class="card-content">
-                                <div class="event-date">01 Oct 2024 - 31 Oct 2024</div>
-                                <div class="event-title">Contemporary Art Exhibition</div>
-                            </div>
-                            <div class="overlay"><span>→</span></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {% for month_year, events in events_by_month_year.items() %}
             <div class="month-section">
-                <div class="month-header"><i class="fa-regular fa-calendar-days"></i> &nbsp;September 2024</div>
+                <div class="month-header"><i class="fa-regular fa-calendar-days"></i> &nbsp;{{ month_year }}</div>
                 <div class="row">
+                    {% for event in events %}
                     <div class="col-md-4">
-                        <div class="event-card">
-                            <img src="static/images/theatre2.jpg" alt="Event 2" class="event-image">
-                            <div class="card-content">
-                                <div class="event-date">01 Sep 2024 - 30 Sep 2024</div>
-                                <div class="event-title">International Film Festival</div>
+                        <a href="{{ url_for('ticket', event_id=event.EventID) }}" class="event-card-link">
+                            <div class="event-card">
+                                {% if event.preferred_image %}
+                                <img src="{{ event.preferred_image.URL }}" alt="{{ event.EventName }}" class="event-image">
+                                {% else %}
+                                <img src="{{ url_for('static', filename='images/default.jpg') }}" alt="Default Image" class="event-image">
+                                {% endif %}
+                                <div class="card-content">
+                                    <div class="event-date">{{ event.EventDate.strftime('%d %b %Y') }}</div>
+                                    <div class="event-title">{{ event.EventName }}</div>
+                                </div>
+                                <div class="overlay"><span>→</span></div>
                             </div>
-                            <div class="overlay"><span>→</span></div>
-                        </div>
+                        </a>
                     </div>
+                    {% endfor %}
                 </div>
             </div>
+            {% endfor %}
 
             <nav aria-label="Event pagination" class="mt-4">
                 <ul class="pagination justify-content-center">

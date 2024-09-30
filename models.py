@@ -9,8 +9,9 @@ class Users(db.Model):
     Name = db.Column(db.String(100), nullable=False)
     Email = db.Column(db.String(320), unique=True, nullable=False)
     Password = db.Column(db.String(128), nullable=False)  # Assuming hashed storage
-    PaymentMethod = db.relationship('PaymentMethod', back_populates='User', uselist=False)
-    Transactions = db.relationship('Transaction', back_populates='User')
+    Phone = db.Column(db.String(20), nullable=False)
+    paymentMethod = db.relationship('PaymentMethod', back_populates='users', uselist=False)
+    transaction = db.relationship('Transaction', back_populates='users')
 
 class PaymentMethod(db.Model):
     __tablename__ = 'PaymentMethod'
@@ -22,41 +23,48 @@ class PaymentMethod(db.Model):
     ExpireDate = db.Column(db.DateTime, nullable=False)
     BillAddr = db.Column(db.String(500), nullable=False)
     CardHolderName = db.Column(db.String(100), nullable=False)
-    User = db.relationship('Users', back_populates='PaymentMethod')
+    users = db.relationship('Users', back_populates='paymentMethod')
 
 class Location(db.Model):
     __tablename__ = 'Location'
-    LocationID = db.Column(db.Integer, primary_key=True)
-    VenueName = db.Column(db.String(100), nullable=False)
+    LocationID = db.Column(db.String(20), primary_key=True)
+    VenueName = db.Column(db.String(50), nullable=False)
     Address = db.Column(db.String(100), nullable=False)
-    Capacity = db.Column(db.Integer, nullable=False)
-    Events = db.relationship('Event', back_populates='Location')
+    Country = db.Column(db.String(50), nullable=False)
+    State = db.Column(db.String(50), nullable=False)
+    PostalCode = db.Column(db.String(10), nullable=False)
+    event = db.relationship('Event', back_populates='location')
+    image = db.relationship('Image', back_populates='location')
 
 class Event(db.Model):
     __tablename__ = 'Event'
-    EventID = db.Column(db.Integer, primary_key=True)
+    EventID = db.Column(db.String(20), primary_key=True)
     EventName = db.Column(db.String(100), nullable=False)
-    Description = db.Column(db.String(300))
     EventDate = db.Column(db.DateTime, nullable=False)
-    LocationID = db.Column(db.Integer, db.ForeignKey('Location.LocationID'))
-    Tickets = db.relationship('Ticket', back_populates='Event')
-    Queues = db.relationship('Queue', back_populates='Event')
-    Location = db.relationship('Location', back_populates='Events')
-
+    # Description = db.Column(db.String(300))
+    LocationID = db.Column(db.String(20), db.ForeignKey('Location.LocationID'))
+    ticketCategory = db.relationship('TicketCategory', back_populates='event')
+    queue = db.relationship('Queue', back_populates='event')
+    location = db.relationship('Location', back_populates='event')
+    image = db.relationship('Image', back_populates='event')
 class Ticket(db.Model):
     __tablename__ = 'Ticket'
     TicketID = db.Column(db.Integer, primary_key=True)
-    EventID = db.Column(db.Integer, db.ForeignKey('Event.EventID'))
+    CatID = db.Column(db.Integer, db.ForeignKey('TicketCategory.CatID'))
+    EventID = db.Column(db.String(20), db.ForeignKey('Event.EventID'))
     SeatNo = db.Column(db.Integer, nullable=False)
     Status = db.Column(db.String(20), nullable=False)
-    Transaction = db.relationship('Transaction', back_populates='Ticket', uselist=False)
-    Category = db.relationship('TicketCategory', back_populates='Tickets')
-
+    transaction = db.relationship('Transaction', back_populates='ticket')
+    ticketCategory = db.relationship('TicketCategory', back_populates='ticket')
 class TicketCategory(db.Model):
     __tablename__ = 'TicketCategory'
     CatID = db.Column(db.Integer, primary_key=True)
-    Price = db.Column(db.Numeric, nullable=False)
-    Tickets = db.relationship('Ticket', back_populates='Category')
+    EventID = db.Column(db.String(20), db.ForeignKey('Event.EventID'))
+    CatName = db.Column(db.String(20), nullable=False)
+    CatPrice = db.Column(db.Numeric, nullable=False)
+    SeatsAvailable = db.Column(db.Numeric, nullable=False)
+    ticket = db.relationship('Ticket', back_populates='ticketCategory')
+    event = db.relationship('Event', back_populates='ticketCategory') 
 
 class Transaction(db.Model):
     __tablename__ = 'Transaction'
@@ -67,22 +75,25 @@ class Transaction(db.Model):
     UserID = db.Column(db.Integer, db.ForeignKey('Users.UserID'))
     CardID = db.Column(db.Integer, db.ForeignKey('PaymentMethod.CardID'))
     TicketID = db.Column(db.Integer, db.ForeignKey('Ticket.TicketID'))
-    User = db.relationship('Users', back_populates='Transactions')
-    Ticket = db.relationship('Ticket', back_populates='Transaction')
+    users = db.relationship('Users', back_populates='transaction')
+    ticket = db.relationship('Ticket', back_populates='transaction')
 
 class Queue(db.Model):
     __tablename__ = 'Queue'
     QueueID = db.Column(db.Integer, primary_key=True)
     UserID = db.Column(db.Integer, db.ForeignKey('Users.UserID'))
-    EventID = db.Column(db.Integer, db.ForeignKey('Event.EventID'))
-    User = db.relationship('Users', backref='QueueEntries')
-    Event = db.relationship('Event', backref='QueueEntries')
+    EventID = db.Column(db.String(100), db.ForeignKey('Event.EventID'))
+    users = db.relationship('Users', backref='QueueEntries')
+    event = db.relationship('Event', back_populates='queue')
 
 class Image(db.Model):
     __tablename__ = 'Image'
     ImageID = db.Column(db.Integer, primary_key=True)
+    URL = db.Column(db.String(500), nullable=False)
+    Ratio = db.Column(db.String(20), nullable=False)
     Width = db.Column(db.Integer, nullable=False)
     Height = db.Column(db.Integer, nullable=False)
-    Resolution = db.Column(db.String(50), nullable=False)  # Example format: '1920x1080'
-    LocationID = db.Column(db.Integer, db.ForeignKey('Location.LocationID'), nullable=True)
-    EventID = db.Column(db.Integer, db.ForeignKey('Event.EventID'), nullable=True)
+    EventID = db.Column(db.String(20), db.ForeignKey('Event.EventID'))
+    LocationID = db.Column(db.String(20), db.ForeignKey('Location.LocationID'))
+    event = db.relationship('Event', back_populates='image')
+    location = db.relationship('Location', back_populates='image')

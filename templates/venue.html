@@ -99,90 +99,16 @@
             </div>
 
             <div class="row">
+                {% for venue in venues %}
                 <div class="col-md-2">
                     <div class="venue-card">
-                        <img src="static/images/venue1.jpg" alt="Venue 1" class="venue-image">
+                        <img src="{{ venue.ImageURL }}" alt="{{ venue.VenueName }}" class="venue-image">
                         <div class="overlay"><span>→</span></div>
-                        <div class="venue-title">Venue 1</div>
+                        <div class="venue-title">{{ venue.VenueName }}</div>
+                        <!-- You can also display address and other details if needed -->
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <div class="venue-card">
-                        <img src="static/images/venue2.jpg" alt="Venue 2" class="venue-image">
-                        <div class="overlay"><span>→</span></div>
-                        <div class="venue-title">Venue 2</div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="venue-card">
-                        <img src="static/images/venue3.jpg" alt="Venue 3" class="venue-image">
-                        <div class="overlay"><span>→</span></div>
-                        <div class="venue-title">Venue 3</div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="venue-card">
-                        <img src="static/images/venue4.jpg" alt="Venue 4" class="venue-image">
-                        <div class="overlay"><span>→</span></div>
-                        <div class="venue-title">Venue 4</div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="venue-card">
-                        <img src="static/images/venue5.jpg" alt="Venue 5" class="venue-image">
-                        <div class="overlay"><span>→</span></div>
-                        <div class="venue-title">Venue 5</div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="venue-card">
-                        <img src="static/images/venue6.jpg" alt="Venue 6" class="venue-image">
-                        <div class="overlay"><span>→</span></div>
-                        <div class="venue-title">Venue 6</div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="venue-card">
-                        <img src="static/images/venue1.jpg" alt="Venue 1" class="venue-image">
-                        <div class="overlay"><span>→</span></div>
-                        <div class="venue-title">Venue 1</div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="venue-card">
-                        <img src="static/images/venue2.jpg" alt="Venue 2" class="venue-image">
-                        <div class="overlay"><span>→</span></div>
-                        <div class="venue-title">Venue 2</div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="venue-card">
-                        <img src="static/images/venue3.jpg" alt="Venue 3" class="venue-image">
-                        <div class="overlay"><span>→</span></div>
-                        <div class="venue-title">Venue 3</div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="venue-card">
-                        <img src="static/images/venue4.jpg" alt="Venue 4" class="venue-image">
-                        <div class="overlay"><span>→</span></div>
-                        <div class="venue-title">Venue 4</div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="venue-card">
-                        <img src="static/images/venue5.jpg" alt="Venue 5" class="venue-image">
-                        <div class="overlay"><span>→</span></div>
-                        <div class="venue-title">Venue 5</div>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="venue-card">
-                        <img src="static/images/venue6.jpg" alt="Venue 6" class="venue-image">
-                        <div class="overlay"><span>→</span></div>
-                        <div class="venue-title">Venue 6</div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
 
             <nav aria-label="Venue pagination" class="mt-4">

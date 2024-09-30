@@ -6,6 +6,10 @@
     <title>TicketGrab</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         body {
@@ -101,15 +105,18 @@
     
     <main class="split-screen">
         <div class="left-side">
-            <img src="{{ url_for('static', filename='images/artist3.jpg') }}" alt="Taylor Swift">
+            {% if event.image %}
+                <img src="{{ event.image.URL }}" alt="{{ event.EventName }}">
+            {% else %}
+                <img src="{{ url_for('static', filename='images/default.jpg') }}" alt="Event Image">
+            {% endif %}
             <div class="title-description-container">
-                <h3 class="text-center mb-4" style="margin-top:10px">Taylor Swift Eras Tour</h3>
+                <h3 class="text-center mb-4" style="margin-top:10px">{{ event.EventName }}</h3>
                 <div class="vertical-line"></div>
                 <div class="description">
-                    <p>
-                        Taylor Swift is an iconic American singer-songwriter known for her narrative-driven songs that often revolve around her personal life. She has evolved her musical style from country to pop, releasing critically acclaimed albums like "1989" and "Reputation." Swift has won numerous awards, including multiple Grammy Awards, and is known for her powerful songwriting, business acumen, and passionate fan base known as "Swifties."
-                    </p>
-                </div>
+                    <!-- <p>
+                        {{ event.Description | default('No description available for this event.') }}
+                    </p> -->
             </div>
         </div>
 
@@ -121,26 +128,25 @@
                     <h5>Contact Details</h5>
                     <div class="contact-detail d-flex justify-content-between">
                         <p>Full Name</p>
-                        <p><strong>Celeste Grace</strong></p>
+                        <p><strong>{{ user.Name }}</strong></p>
                     </div>
                     <div class="contact-detail d-flex justify-content-between">
                         <p>Email</p>
-                        <p><strong>celestegracetan@gmail.com</strong></p>
+                        <p><strong>{{ user.Email }}</strong></p>
                     </div>
                     <div class="contact-detail d-flex justify-content-between">
                         <p>Mobile No.</p>
-                        <p><strong>+6597225796</strong></p>
+                        <p><strong>{{ user.Phone }}</strong></p>
                     </div>
                 </div>
 
                 <form id="paymentForm">
                     <div class="form-group">
                         <label for="category">Category</label>
-                        <select class="form-control" id="category" onchange="calculateTotal()">
-                            <option value="100">Cat 1 - $100</option>
-                            <option value="80">Cat 2 - $80</option>
-                            <option value="50">Cat 3 - $50</option>
-                            <option value="30">Cat 4 - $30</option>
+                        <select class="form-control" id="category" name="category" onchange="calculateTotal()">
+                            {% for cat in ticket_categories %}
+                                <option value="{{ cat.CatPrice }}">{{ cat.CatName }} - ${{ cat.CatPrice }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
