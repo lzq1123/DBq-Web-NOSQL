@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketGrab</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            margin: 0;
+        }
+        .split-screen {
+            display: flex;
+            margin-top: 50px; 
+        }
+        .left-side {
+            flex: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #000; 
+            color: #F5F5F5; 
+            padding: 0;
+        }
+        .left-side img {
+            width: 100%;
+            height: 100%; 
+            object-fit: cover; 
+        }
+        .title-description-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .vertical-line {
+            width: 2px;
+            height: 100px;
+            background-color: #F5F5F5; 
+            margin: 0 15px;
+        }
+        .description {
+            padding: 20px;
+            font-size: 1rem;
+            line-height: 1.6;
+            text-align: center;
+            flex: 1;
+        }
+        .right-side {
+            flex: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; 
+            padding: 0 30px; 
+            margin-top:40px;
+            margin-bottom: 30px;
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            max-width: 450px;
+            margin: auto;
+            width: 100%;
+            padding: 0;
+        }
+        .details-box {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .details-box h5 {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .payment-form {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .payment-form h5 {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .total-price {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #007bff;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    {% include 'nav.html' %}
+    
+    <main class="split-screen">
+        <div class="left-side">
+            <img src="{{ url_for('static', filename='images/artist3.jpg') }}" alt="Taylor Swift">
+            <div class="title-description-container">
+                <h3 class="text-center mb-4" style="margin-top:10px">Taylor Swift Eras Tour</h3>
+                <div class="vertical-line"></div>
+                <div class="description">
+                    <p>
+                        Taylor Swift is an iconic American singer-songwriter known for her narrative-driven songs that often revolve around her personal life. She has evolved her musical style from country to pop, releasing critically acclaimed albums like "1989" and "Reputation." Swift has won numerous awards, including multiple Grammy Awards, and is known for her powerful songwriting, business acumen, and passionate fan base known as "Swifties."
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-side">
+            <div class="form-container">
+                <h3 class="text-center mb-4">Purchase Form</h3>
+
+                <form id="queueform">
+                    <div>
+                        <button type="submit" class="btn btn-primary btn-block">Join Queue</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    {% include 'footer.html' %}
+    
+    <script>
+        function calculateTotal() {
+            const categorySelect = document.getElementById('category');
+            const quantityInput = document.getElementById('quantity');
+            const totalPriceElement = document.getElementById('total-price');
+
+            const pricePerTicket = parseInt(categorySelect.value);
+            const quantity = parseInt(quantityInput.value);
+            const totalPrice = pricePerTicket * quantity;
+
+            totalPriceElement.textContent = `Total: $${totalPrice}`;
+        }
+
+        window.onload = calculateTotal;
+
+        function luhnCheck(val) {
+            let sum = 0;
+            for (let i = 0; i < val.length; i++) {
+                let intVal = parseInt(val.substr(i, 1));
+                if (i % 2 == 0) {
+                    intVal *= 2;
+                    if (intVal > 9) {
+                        intVal = 1 + (intVal % 10);
+                    }
+                }
+                sum += intVal;
+            }
+            return (sum % 10) == 0;
+        }
+
+        function validateCard() {
+            const cardNumber = document.getElementById('card-number').value;
+            const validationMessage = document.getElementById('card-validation-message');
+            
+            if (cardNumber.length > 0 && !luhnCheck(cardNumber)) {
+                validationMessage.textContent = "Invalid card number!";
+            } else {
+                validationMessage.textContent = "";
+            }
+        }
+    </script>
+</body>
+</html>

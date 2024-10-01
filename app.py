@@ -57,6 +57,10 @@ def aboutus():
 def ticket():
     return render_template('ticket.html')
 
+@app.route('/queue')
+def queue():
+    return render_template('queue.html')
+
 
 @app.route('/venueinfo')
 def venueinfo():
