@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from models import db, Users, PaymentMethod, Location, Event, Ticket, TicketCategory, Transaction, Queue
 from config import Config
 from sqlalchemy import text 
@@ -60,7 +60,19 @@ def ticket():
 @app.route('/queue')
 def queue():
     
-    return render_template('queue.html')
+    return render_template('enterqueue.html')
+
+@app.route('/joinqueue', methods=['POST'])
+def joinqueue():
+    userID = request.form.get('userId')
+    eventID = request.form.get('eventId')
+    QueueNo = 2
+    data = {
+      'UserID': userID,
+      'EventID': eventID,
+      'QNo':QueueNo
+    }
+    return render_template('queue.html', data=data)
 
 
 @app.route('/venueinfo')
