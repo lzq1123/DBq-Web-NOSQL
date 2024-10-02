@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, session, url_for, redirect
 from config import Config
-from sqlalchemy import text, extract
+from sqlalchemy import text, extract,and_
 from sqlalchemy.orm import joinedload
 from api.ticketmaster import fetch_and_store_events
 import logging, traceback
@@ -8,9 +8,9 @@ from datetime import datetime
 import calendar
 import bcrypt
 from auth import hash_password, verify_password, RegistrationForm, LoginForm
-
+import calendar
 from models import db, Users, PaymentMethod, Location, Event, Ticket, TicketCategory, Transaction, Queue
-from auth import hash_password, verify_password
+
 
 app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = Config.APP_SECRET_KEY
@@ -45,36 +45,51 @@ with app.app_context():
 def home():
     return render_template('landing.html')
 
+
 @app.route('/event')
 def event():
-    search_query = request.args.get('search', '').lower()  # Get search query from the request, default is empty
-    page = request.args.get('page', 1, type=int)  # Get the current page number from the request, default is 1
-    events_per_page = 9  # Customize how many events per page you'd like to show
-
+    search_query = request.args.get('search', '').lower() 
+    search_month = request.args.get('search_month')  
+    page = request.args.get('page', 1, type=int)  
+    events_per_page = 9  
     events_by_month_year = {}
     preferred_width = 1920
+    search_date_parsed = None
 
-    # Fetch all events and sort them by year and day within each year
-    events = Event.query.options(joinedload(Event.image)).order_by(Event.EventDate).all()
 
-    # Filter events by search query if it's provided
-    if search_query:
-        events = [event for event in events if search_query in event.EventName.lower()]
+    if search_month:
+        try:
+            search_date_parsed = datetime.strptime(search_month, '%Y-%m')
+        except ValueError:
+            search_date_parsed = None  
 
-    # Paginate the filtered events
-    total_events = len(events)
-    total_pages = (total_events + events_per_page - 1) // events_per_page
-    start_index = (page - 1) * events_per_page
-    end_index = start_index + events_per_page
-    paginated_events = events[start_index:end_index]
+ 
+    base_query = Event.query.options(joinedload(Event.image)).order_by(Event.EventDate)
 
-    # Group events by month and year
-    for event in paginated_events:
-        # If there are images associated with the event, choose one closest to the preferred width
+    if search_query and search_date_parsed:
+        base_query = base_query.filter(
+            and_(
+                Event.EventName.ilike(f'%{search_query}%'),
+                Event.EventDate.between(search_date_parsed.replace(day=1),
+                                        search_date_parsed.replace(day=calendar.monthrange(search_date_parsed.year, search_date_parsed.month)[1]))
+            )
+        )
+    elif search_query:
+        base_query = base_query.filter(Event.EventName.ilike(f'%{search_query}%'))
+    elif search_date_parsed:
+        base_query = base_query.filter(
+            Event.EventDate.between(search_date_parsed.replace(day=1),
+                                    search_date_parsed.replace(day=calendar.monthrange(search_date_parsed.year, search_date_parsed.month)[1]))
+        )
+
+    # Pagination
+    paginated_events = base_query.paginate(page=page, per_page=events_per_page)
+
+    for event in paginated_events.items:
         if event.image:
             event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
         else:
-            event.preferred_image = None  # Set to None if no images exist
+            event.preferred_image = None
 
         # Group events by month and year
         month_year = f"{calendar.month_name[event.EventDate.month]} {event.EventDate.year}"
@@ -82,7 +97,6 @@ def event():
             events_by_month_year[month_year] = []
         events_by_month_year[month_year].append(event)
 
-    # Sort months/years so that they appear correctly
     sorted_month_years = sorted(
         events_by_month_year.keys(),
         key=lambda x: (int(x.split(' ')[1]), -1 if int(x.split(' ')[1]) == datetime.now().year else 0)
@@ -91,36 +105,75 @@ def event():
     return render_template(
         'event.html',
         events_by_month_year={key: events_by_month_year[key] for key in sorted_month_years},
-        search_query=search_query,  # Pass the search query to the template to preserve input in the search box
-        current_page=page,  # Pass the current page to the template for pagination
-        total_pages=total_pages  # Pass total pages to the template to create pagination controls
+        search_query=search_query,
+        search_month=search_month, 
+        current_page=page,
+        total_pages=paginated_events.pages
     )
+
 
 @app.route('/venue')
 def venue():
     preferred_width = 1920
+    page = request.args.get('page', 1, type=int)
+    per_page = 12
+
+    search_query = request.args.get('search', '')
+
+    offset = (page - 1) * per_page
+
+    sql_query = """
+        SELECT "Location"."LocationID", "Location"."VenueName", "Location"."Address", "Location"."Country", "Location"."State", "Location"."PostalCode", 
+        "Image"."URL", "Image"."Width" 
+        FROM "Location" 
+        LEFT JOIN "Image" ON "Location"."LocationID" = "Image"."LocationID"
+        WHERE (:search_query = '' OR "Location"."VenueName" ILIKE :search_query)
+        LIMIT :per_page OFFSET :offset
+    """
+
+    locations = db.session.execute(
+        text(sql_query),
+        {
+            'search_query': f"%{search_query}%" if search_query else '',
+            'per_page': per_page,
+            'offset': offset
+        }
+    ).fetchall()
+
     venues_with_images = []
 
-    locations = Location.query.options(joinedload(Location.image)).all()
-
     for location in locations:
-
-        # If there are images associated with the event, choose one closest to the preferred width
-        if location.image:
-            location.preferred_image = min(location.image, key=lambda img: abs(img.Width - preferred_width))
-        else:
-            location.preferred_image = None  # Set to None if no images exist
-
-        venues_with_images.append({
+        venue = {
             'VenueName': location.VenueName,
             'Address': location.Address,
             'Country': location.Country,
             'State': location.State,
             'PostalCode': location.PostalCode,
-            'ImageURL': location.preferred_image.URL if location.preferred_image else 'path/to/default/image.jpg'
-        })
+            'ImageURL': location.URL if location.URL else 'static/images/venue1.jpg'
+        }
+        venues_with_images.append(venue)
 
-    return render_template('venue.html', venues=venues_with_images)
+    count_query = """
+        SELECT COUNT(*) 
+        FROM "Location" 
+        WHERE (:search_query = '' OR "Location"."VenueName" ILIKE :search_query)
+    """
+    total_venues = db.session.execute(
+        text(count_query),
+        {'search_query': f"%{search_query}%" if search_query else ''}
+    ).scalar()
+
+    total_pages = (total_venues + per_page - 1) // per_page
+    pagination = {
+        'page': page,
+        'total_pages': total_pages,
+        'has_next': page < total_pages,
+        'has_prev': page > 1,
+        'next_num': page + 1 if page < total_pages else None,
+        'prev_num': page - 1 if page > 1 else None,
+    }
+
+    return render_template('venue.html', venues=venues_with_images, pagination=pagination, search_query=search_query)
 
 @app.route('/registersignup')
 def registersignup():
