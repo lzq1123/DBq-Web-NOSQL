@@ -59,6 +59,7 @@ def ticket():
 
 @app.route('/queue')
 def queue():
+    
     return render_template('queue.html')
 
 
