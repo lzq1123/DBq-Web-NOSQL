@@ -190,7 +190,7 @@ def ticket(event_id):
         return redirect(url_for('landing'))
 
     if event.image:
-            event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
+        event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
     else:
         event.preferred_image = None
 
