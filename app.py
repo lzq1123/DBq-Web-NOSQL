@@ -329,6 +329,23 @@ def purchase_tickets(event_id):
         return render_template('landing.html')
 
     return render_template('ticket.html', ticket_categories=ticket_categories)
+@app.route('/queue')
+def queue():
+    
+    return render_template('enterqueue.html')
+
+@app.route('/joinqueue', methods=['POST'])
+def joinqueue():
+    userID = request.form.get('userId')
+    eventID = request.form.get('eventId')
+    QueueNo = 2
+    data = {
+      'UserID': userID,
+      'EventID': eventID,
+      'QNo':QueueNo
+    }
+    return render_template('queue.html', data=data)
+
 
 @app.route('/venueinfo')
 def venueinfo():
