@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TicketGrab</title>
+    <title>{{ event.EventName }} - Ticket Purchase</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
-    <link rel="stylesheet" href="/static/css/style.css">
-    
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         body {
@@ -17,49 +13,28 @@
         }
         .split-screen {
             display: flex;
-            margin-top: 50px; 
+            margin-top: 40px;
         }
         .left-side {
             flex: 50%;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            background-color: #000; 
-            color: #F5F5F5; 
+            justify-content: center;
+            background-color: #000;
+            color: #F5F5F5;
             padding: 0;
         }
         .left-side img {
             width: 100%;
-            height: 100%; 
-            object-fit: cover; 
-        }
-        .title-description-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .vertical-line {
-            width: 2px;
-            height: 100px;
-            background-color: #F5F5F5; 
-            margin: 0 15px;
-        }
-        .description {
-            padding: 20px;
-            font-size: 1rem;
-            line-height: 1.6;
-            text-align: center;
-            flex: 1;
+            height: 100%;
+            object-fit: cover;
         }
         .right-side {
             flex: 50%;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start; 
-            padding: 0 30px; 
-            margin-top:40px;
-            margin-bottom: 30px;
+            justify-content: flex-start;
+            padding: 0 30px;
             background-color: #f5f5f5;
         }
         .form-container {
@@ -86,6 +61,7 @@
             border-radius: 8px;
             border: 1px solid #ced4da;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
         }
         .payment-form h5 {
             margin-top: 20px;
@@ -102,28 +78,16 @@
 </head>
 <body>
     {% include 'nav.html' %}
-    
+
     <main class="split-screen">
         <div class="left-side">
-            {% if event.image %}
-                <img src="{{ event.image.URL }}" alt="{{ event.EventName }}">
-            {% else %}
-                <img src="{{ url_for('static', filename='images/default.jpg') }}" alt="Event Image">
-            {% endif %}
-            <div class="title-description-container">
-                <h3 class="text-center mb-4" style="margin-top:10px">{{ event.EventName }}</h3>
-                <div class="vertical-line"></div>
-                <div class="description">
-                    <!-- <p>
-                        {{ event.Description | default('No description available for this event.') }}
-                    </p> -->
-            </div>
+            <img src="{{ event.ImageURL }}" alt="{{ event.EventName }}">
         </div>
 
-        <div class="right-side">
+        <div class="right-side" style="margin-top:40px">
             <div class="form-container">
-                <h3 class="text-center mb-4">Purchase Form</h3>
-                
+                <h4 class="text-center mb-4">{{ event.EventName }}</h4>
+
                 <div class="details-box">
                     <h5>Contact Details</h5>
                     <div class="contact-detail d-flex justify-content-between">
@@ -140,18 +104,19 @@
                     </div>
                 </div>
 
-                <form id="paymentForm">
+                <form id="paymentForm" method="POST" action="{{ url_for('purchase_tickets', event_id=event_id) }}">
                     <div class="form-group">
                         <label for="category">Category</label>
                         <select class="form-control" id="category" name="category" onchange="calculateTotal()">
-                            {% for cat in ticket_categories %}
-                                <option value="{{ cat.CatPrice }}">{{ cat.CatName }} - ${{ cat.CatPrice }}</option>
-                            {% endfor %}
+                            <option value="100">Cat 1 - $100</option>
+                            <option value="80">Cat 2 - $80</option>
+                            <option value="50">Cat 3 - $50</option>
+                            <option value="30">Cat 4 - $30</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="quantity">Quantity</label>
-                        <input type="number" class="form-control" id="quantity" placeholder="Enter quantity" value="1" onchange="calculateTotal()">
+                        <input type="number" class="form-control" id="quantity" name="quantity" placeholder="Enter quantity" value="1" onchange="calculateTotal()">
                     </div>
 
                     <div class="payment-form text-center">
@@ -159,22 +124,22 @@
                         <div class="total-price" id="total-price">Total: $100</div>
                         <div class="form-group">
                             <label for="cardholder-name">Cardholder Name</label>
-                            <input type="text" class="form-control" id="cardholder-name" placeholder="Enter cardholder name">
+                            <input type="text" class="form-control" id="cardholder-name" name="cardholder-name" placeholder="Enter cardholder name">
                         </div>
                         <div class="form-group">
                             <label for="card-number">Card Number</label>
-                            <input type="text" class="form-control" id="card-number" placeholder="Enter card number" oninput="validateCard()">
+                            <input type="text" class="form-control" id="card-number" name="card-number" placeholder="Enter card number" oninput="validateCard()">
                         </div>
                         <div id="card-validation-message" class="text-danger"></div>
                         <div class="form-group">
                             <label for="cvv">CVV</label>
-                            <input type="text" class="form-control" id="cvv" placeholder="Enter CVV">
+                            <input type="text" class="form-control" id="cvv" name="cvv" placeholder="Enter CVV">
                         </div>
 
                         <div class="form-group">
                             <label for="expiry-month">Expiration Date</label>
                             <div class="d-flex">
-                                <select id="expiry-month" class="form-control" style="margin-right: 10px;">
+                                <select id="expiry-month" name="expiry-month" class="form-control" style="margin-right: 10px;">
                                     <option value="" disabled selected>Month</option>
                                     <option value="01">01 - January</option>
                                     <option value="02">02 - February</option>
@@ -189,7 +154,7 @@
                                     <option value="11">11 - November</option>
                                     <option value="12">12 - December</option>
                                 </select>
-                                <select id="expiry-year" class="form-control">
+                                <select id="expiry-year" name="expiry-year" class="form-control">
                                     <option value="" disabled selected>Year</option>
                                     <script>
                                         const currentYear = new Date().getFullYear();
@@ -203,7 +168,7 @@
 
                         <div class="form-group">
                             <label for="billing-address">Billing Address</label>
-                            <input type="text" class="form-control" id="billing-address" placeholder="Enter billing address">
+                            <input type="text" class="form-control" id="billing-address" name="billing-address" placeholder="Enter billing address">
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">Submit Payment</button>
                     </div>
@@ -213,7 +178,7 @@
     </main>
 
     {% include 'footer.html' %}
-    
+
     <script>
         function calculateTotal() {
             const categorySelect = document.getElementById('category');

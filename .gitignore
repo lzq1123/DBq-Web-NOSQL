@@ -1,4 +1,9 @@
-vscode/
 myenv/
+vscode/
+__pycache__/auth.cpython-312.pyc
+__pycache__/config.cpython-312.pyc
+__pycache__/models.cpython-312.pyc
+api/__pycache__/ticketmaster.cpython-312.pyc
 __pycache__/
 *.pyc
+

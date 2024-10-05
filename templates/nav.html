@@ -1,7 +1,8 @@
 <nav class="navbar navbar-expand-lg navbar-light fixed-top">
     <div class="container">
         <a class="navbar-brand" href="/">
-            <img src="static/images/logo.png" alt="Logo" style="height: 25px; margin-bottom:6px;"> TicketGrab
+            <img src="{{ url_for('static', filename='images/logo.png') }}" style="height: 25px; margin-bottom:6px;" alt="Logo">
+             TicketGrab
         </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>

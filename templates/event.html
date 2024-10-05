@@ -8,22 +8,36 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
 </head>
+<style>
+     .event-title {
+        font-size: 18px;
+        font-weight: 500;
+        white-space: nowrap;    
+        overflow: hidden;       
+        text-overflow: ellipsis;
+    }
+</style>
 <body>
    <!-- Include Navigation -->
    {% include 'nav.html' %}
-    <main style="margin-top: 80px;">
+   
+   <main style="margin-top: 80px;">
         <div class="container">
             <div class="row justify-content-between align-items-center mb-4">
                 <h4 class="col-auto">All Events</h4>
                 <div class="col-auto">
-                    <div class="input-group">
-                        <input type="text" class="form-control" placeholder="Search events">
-                        <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="button"><i class="fa fa-search"></i></button>
+                    <form method="GET" action="{{ url_for('event') }}">
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Search events" name="search" value="{{ search_query }}">
+                            <input type="month" class="form-control" name="search_month" placeholder="Select month and year" value="{{ search_month }}">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="submit"><i class="fa fa-search"></i></button>
+                            </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
             </div>
+
             <!-- Event Sections -->
             {% for month_year, events in events_by_month_year.items() %}
             <div class="month-section">
@@ -51,18 +65,25 @@
             </div>
             {% endfor %}
 
+            <!-- Pagination -->
             <nav aria-label="Event pagination" class="mt-4">
                 <ul class="pagination justify-content-center">
-                    <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1">Previous</a></li>
-                    <li class="page-item"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                    <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('event', search=search_query, search_month=search_month, page=current_page-1) }}">Previous</a>
+                    </li>
+                    {% for page_num in range(1, total_pages + 1) %}
+                    <li class="page-item {% if page_num == current_page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('event', search=search_query, search_month=search_month, page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                    {% endfor %}
+                    <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('event', search=search_query, search_month=search_month, page=current_page+1) }}">Next</a>
+                    </li>
                 </ul>
             </nav>
         </div>
     </main>
-<!-- Include Footer -->
-{% include 'footer.html' %}
-
-    </body>
+    <!-- Include Footer -->
+    {% include 'footer.html' %}
+</body>
+</html>
