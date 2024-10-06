@@ -56,29 +56,19 @@
                     </tr>
                 </thead>
                 <tbody>
-                <!-- Upcoming events -->
-                {% for ticket in ticket_details %}
-                    {% if ticket.Status == 'upcoming' %}
-                        <tr class="upcoming-event">
-                            <td>{{ ticket.TranscID }}</td>
-                            <td>{{ ticket.TransDate }}</td>
-                            <td>{{ ticket.EventName }}</td>
-                            <td>{{ ticket.TicketCount }}</td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
+                    <tr class="upcoming-event">
+                        <td>14269324</td>
+                        <td>15-05-2024 12:41pm</td>
+                        <td>Olivia Rodrigo - GUTS World Tour</td>
+                        <td>2</td>
+                    </tr>
 
-                <!-- Finished events -->
-                {% for ticket in ticket_details %}
-                    {% if ticket.Status == 'finished' %}
-                        <tr class="finished-event d-none">
-                            <td>{{ ticket.TranscID }}</td>
-                            <td>{{ ticket.TransDate }}</td>
-                            <td>{{ ticket.EventName }}</td>
-                            <td>{{ ticket.TicketCount }}</td>
-                        </tr>
-                    {% endif %}
-                {% endfor %}
+                    <tr class="finished-event d-none">
+                        <td>14269325</td>
+                        <td>10-01-2023 08:00pm</td>
+                        <td>Ed Sheeran - Divide Tour</td>
+                        <td>1</td>
+                    </tr>
 
                 </tbody>
             </table>
