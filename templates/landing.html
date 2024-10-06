@@ -64,121 +64,44 @@
 <main>
     <div class="container hot-events">
         <div class="row">
-            <div class="col-12">
-                <div class="hot-events-header">
-                <h4><span style="font-size:100%;color:orange; margin-bottom:10px; margin-right: 2px;">&starf;</span>Hot Events</h4>
-
-            </div>
-        </div>
-        <div class="row">
+            {% for event in hot_events %}
             <div class="col-md-4">
-                <div class="event-card">
-                    <img src="static/images/theatre1.jpg" alt="Event 1" class="event-image">
-                    <div class="overlay"><span>→</span></div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="event-card">
-                    <img src="static/images/theatre2.jpg" alt="Event 2" class="event-image">
-                    <div class="overlay"><span>→</span></div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="event-card">
-                    <img src="static/images/theatre3.jpg" alt="Event 3" class="event-image">
-                    <div class="overlay"><span>→</span></div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="event-card">
-                    <img src="static/images/artist1.jpg" alt="Event 3" class="event-image">
-                    <div class="overlay"><span>→</span></div>
-                </div>
-            </div>            <div class="col-md-4">
-                <div class="event-card">
-                    <img src="static/images/artist2.jpg" alt="Event 3" class="event-image">
-                    <div class="overlay"><span>→</span></div>
-                </div>
-            </div>            <div class="col-md-4">
-                <a href="/queue">
+                <a href="{{ url_for('ticket', event_id=event.EventID) }}" class="event-card-link">
                     <div class="event-card">
-                        <img src="static/images/artist3.jpg" alt="Event 3" class="event-image">
+                        {% if event.ImageURL %}
+                        <img src="{{ event.ImageURL }}" alt="{{ event.EventName }}" class="event-image">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='images/default.jpg') }}" alt="Default Image" class="event-image">
+                        {% endif %}
                         <div class="overlay"><span>→</span></div>
                     </div>
                 </a>
-                
             </div>
-            <div class="col-12">
-                <a href="event" class="more-events-btn">More Events</a>
-            </div>
+            {% endfor %}
         </div>
     </div>
     
     <!-- Venue Section -->
     <div class="container venue">
+        <h2>Top Venues Picks</h2>
         <div class="row">
-            <div class="col-12">
-                <div class="venue-header">
-                    <h4>Top Venues Picks</h4>
+            {% for venue in venues %}
+                <div class="col-md-2">
+                    <a href="{{ url_for('venueinfo', LocationID=venue['LocationID']) }}">
+                        <div class="venue-card">
+                            <img src="{{ venue['ImageURL'] }}" alt="{{ venue['VenueName'] }}" class="venue-image">
+                            <div class="overlay"><span>→</span></div>
+                        </div>
+                    </a>
                 </div>
-            </div>
-    
-            <div class="col-md-2">
-                <a href="/venueinfo">
-                    <div class="venue-card">
-                        <img src="static/images/venue1.jpg" alt="Venue 1" class="venue-image">
-                        <div class="overlay"><span>→</span></div>
-                    </div>
-                </a>
-            </div>
-    
-
-            <div class="col-md-2">
-                <div class="venue-card">
-                    <img src="static/images/venue2.jpg" alt="Venue 2" class="venue-image">
-                    <div class="overlay"><span>→</span></div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="venue-card">
-                    <img src="static/images/venue3.jpg" alt="Venue 3" class="venue-image">
-                    <div class="overlay"><span>→</span></div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="venue-card">
-                    <img src="static/images/venue4.jpg" alt="Venue 4" class="venue-image">
-                    <div class="overlay"><span>→</span></div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="venue-card">
-                    <img src="static/images/venue5.jpg" alt="Venue 5" class="venue-image">
-                    <div class="overlay"><span>→</span></div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="venue-card">
-                    <img src="static/images/venue6.jpg" alt="Venue 6" class="venue-image">
-                    <div class="overlay"><span>→</span></div>
-                </div>
-            </div>
-        </div>
-    
-
-        <div class="row">
-            <div class="col-12">
-                <a href="/venue" class="more-venues-btn">More Venues</a>
-            </div>
+            {% endfor %}
         </div>
     </div>
     
 </main>
 
-
 <!-- Include Footer -->
 {% include 'footer.html' %}
-
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
