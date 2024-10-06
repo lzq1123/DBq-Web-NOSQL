@@ -201,7 +201,7 @@ def venue():
     offset = (page - 1) * per_page
 
     sql_query = """
-        SELECT "Location"."LocationID", "Location"."VenueName", "Location"."Address", "Location"."Country", "Location"."State", "Location"."PostalCode", 
+        SELECT "Location"."LocationID", "Location"."VenueName", "Location"."Address", "Location"."Country", "State", "PostalCode", 
         "Image"."URL", "Image"."Width" 
         FROM "Location" 
         LEFT JOIN "Image" ON "Location"."LocationID" = "Image"."LocationID"
@@ -222,8 +222,8 @@ def venue():
 
     for location in locations:
         venue = {
-
             'LocationID': location.LocationID,
+            'VenueName': location.VenueName,  # Ensure the VenueName is passed
             'Address': location.Address,
             'Country': location.Country,
             'State': location.State,
@@ -260,10 +260,11 @@ def venueinfo(LocationID):
     if not venue:
         return "Venue not found", 404
 
-    return render_template('venueinfo.html', venue=venue)
+    image_url = venue.image[0].URL if venue.image else 'static/images/venue1.jpg'  # Use a default image if none is found
 
-if __name__ == "__main__":
-    app.run(debug=True)
+    return render_template('venueinfo.html', venue=venue, image_url=image_url)
+
+
 
 @app.route('/registersignup')
 def registersignup():
