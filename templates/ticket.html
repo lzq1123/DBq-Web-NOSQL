@@ -81,11 +81,10 @@
 
     <main class="split-screen">
         <div class="left-side">
-            <img src="{{ event_image.ImageURL }}" alt="{{ event.EventName }}">
+            <img src="{{ event.ImageURL }}" alt="{{ event.EventName }}">
         </div>
 
         <div class="right-side" style="margin-top:40px">
-            {% if session.user_id %}
             <div class="form-container">
                 <h4 class="text-center mb-4">{{ event.EventName }}</h4>
 
@@ -105,21 +104,15 @@
                     </div>
                 </div>
 
-                {% if tickets_available %}
-                <form id="paymentForm" method="POST" action="{{ url_for('ticket_purchase', event_id=event.EventID) }}">
+                <form id="paymentForm" method="POST" action="{{ url_for('purchase_tickets', event_id=event_id) }}">
                     <div class="form-group">
                         <label for="category">Category</label>
-                        {% if event.ticketCategory %}
                         <select class="form-control" id="category" name="category" onchange="calculateTotal()">
-                            {% for category in event.ticketCategory %}
-                                {% if category.SeatsAvailable > 0 %}
-                                    <option value="{{ category.CatID }}">{{ category.CatName }} - ${{ category.CatPrice }}</option>
-                                {% endif %}
-                            {% endfor %}
+                            <option value="100">Cat 1 - $100</option>
+                            <option value="80">Cat 2 - $80</option>
+                            <option value="50">Cat 3 - $50</option>
+                            <option value="30">Cat 4 - $30</option>
                         </select>
-                        {% else %}
-                        <p>No ticket categories available for this event.</p>
-                        {% endif %}
                     </div>
                     <div class="form-group">
                         <label for="quantity">Quantity</label>
@@ -180,18 +173,7 @@
                         <button type="submit" class="btn btn-primary btn-block">Submit Payment</button>
                     </div>
                 </form>
-                {% else %}
-                <div class="alert alert-info" role="alert">
-                    Tickets Sold Out
-                </div>
-                {% endif %}
             </div>
-            {% else %}
-            <div class="form-container text-center">
-                <h4>Please log in to purchase tickets.</h4>
-                <a href="{{ url_for('registersignup') }}" class="btn btn-primary">Login</a>
-            </div>
-            {% endif %}
         </div>
     </main>
 
