@@ -175,13 +175,13 @@
 
         <div class="row d-flex justify-content-center">
             <div class="col-md-6">
-                <h5 class="center-text">Ticket Sales Over Time (Default Event)</h5>
+                <h5 class="center-text">Ticket Sales Over Time </h5>
                 <div class="chart-container">
                     <canvas id="ticketSalesChartDefault"></canvas>
                 </div>
             </div>
             <div class="col-md-6">
-                <h5 class="center-text">Total Revenue by Event (Default Event)</h5>
+                <h5 class="center-text">Total Revenue by Event </h5>
                 <div class="chart-container">
                     <canvas id="revenueChartDefault"></canvas>
                 </div>
@@ -201,6 +201,33 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
     <script>
+
+document.getElementById('applyButton').addEventListener('click', function() {
+    const selectedEvent = document.getElementById('searchEvent').value;
+
+    fetch('/get_event_data', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            event_name: selectedEvent
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Update the ticket sales chart for the selected event
+        ticketSalesChartDefault.data.labels = data.ticket_sales_data.dates;
+        ticketSalesChartDefault.data.datasets[0].data = data.ticket_sales_data.values;
+        ticketSalesChartDefault.update();  
+
+        // Update the revenue chart for the selected event
+        revenueChartDefault.data.labels = data.revenue_data.events;
+        revenueChartDefault.data.datasets[0].data = data.revenue_data.values;
+        revenueChartDefault.update();  
+    });
+});
+
         // Default Event Data
         var ticketSalesDates = {{ ticket_sales_dates | tojson }};
         var ticketSalesData = {{ ticket_sales_data | tojson }};
@@ -305,13 +332,13 @@
             }
         });
 
-        // Default Event Data
+        //  Event Data
         var ticketSalesDatesDefault = {{ ticket_sales_dates_default | tojson }};
         var ticketSalesDataDefault = {{ ticket_sales_data_default | tojson }};
         var revenueEventNamesDefault = {{ revenue_event_names_default | tojson }};
         var revenueDataDefault = {{ revenue_data_default | tojson }};
 
-        // Line Chart for Ticket Sales (Default Event)
+        // Line Chart for Ticket Sales 
         var ctxDefault1 = document.getElementById('ticketSalesChartDefault').getContext('2d');
         var ticketSalesChartDefault = new Chart(ctxDefault1, {
             type: 'line',
@@ -334,7 +361,7 @@
             }
         });
 
-        // Bar Chart for Total Revenue (Default Event)
+        // Bar Chart for Total Revenue 
         var ctxDefault2 = document.getElementById('revenueChartDefault').getContext('2d');
         var revenueChartDefault = new Chart(ctxDefault2, {
             type: 'bar',

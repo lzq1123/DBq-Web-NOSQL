@@ -8,7 +8,7 @@ class Users(db.Model):
     UserID = db.Column(db.Integer, primary_key=True)
     Name = db.Column(db.String(100), nullable=False)
     Email = db.Column(db.String(320), unique=True, nullable=False)
-    Password = db.Column(db.String(128), nullable=False)  # Assuming hashed storage
+    Password = db.Column(db.String(128), nullable=False)  
     Phone = db.Column(db.String(20), nullable=False)
     paymentMethod = db.relationship('PaymentMethod', back_populates='users', uselist=False)
     transaction = db.relationship('Transaction', back_populates='users')

@@ -750,84 +750,41 @@ def aboutus():
                         default_event=default_event)
 
 
-@app.route('/get_event_statistics', methods=['POST'])
-def get_event_statistics():
-    data = request.get_json()
-    event_name = data.get('event_name', '').lower()
+@app.route('/get_event_data', methods=['POST'])
+def get_event_data():
+    event_name = request.json.get('event_name').lower()
 
-    print(f"Event Name received: {event_name}")
+    # Query ticket sales for the selected event
+    ticket_sales_results = db.session.execute(text("""
+        SELECT e."EventDate", COUNT(t."TicketID") AS "TicketsSold"
+        FROM "Ticket" t
+        JOIN "Event" e ON t."EventID" = e."EventID"
+        WHERE LOWER(e."EventName") LIKE :event_name
+        GROUP BY e."EventDate"
+        ORDER BY e."EventDate";
+    """), {'event_name': f"%{event_name}%"}).fetchall()
 
-    try:
-        if event_name:
-            # Query ticket sales for the selected event
-            ticket_sales_results = db.session.execute(text("""
-                SELECT e."EventDate", COUNT(t."TicketID") AS "TicketsSold"
-                FROM "Ticket" t
-                JOIN "Event" e ON t."EventID" = e."EventID"
-                WHERE LOWER(e."EventName") LIKE :event_name
-                GROUP BY e."EventDate"
-                ORDER BY e."EventDate";
-            """), {'event_name': f"%{event_name}%"}).fetchall()
+    ticket_sales_data = {
+        'dates': [result[0].strftime('%Y-%m-%d') for result in ticket_sales_results],
+        'values': [float(result[1]) for result in ticket_sales_results]
+    }
 
-            ticket_sales_data = {
-                'dates': [result[0].strftime('%Y-%m-%d') for result in ticket_sales_results],
-                'values': [float(result[1]) for result in ticket_sales_results]
-            }
+    # Query revenue data for the selected event
+    revenue_results = db.session.execute(text("""
+        SELECT e."EventName", SUM(tc."CatPrice") AS "TotalRevenue"
+        FROM "Ticket" t
+        JOIN "TicketCategory" tc ON t."CatID" = tc."CatID"
+        JOIN "Event" e ON t."EventID" = e."EventID"
+        WHERE LOWER(e."EventName") LIKE :event_name
+        GROUP BY e."EventName";
+    """), {'event_name': f"%{event_name}%"}).fetchall()
 
-            # Query revenue data
-            revenue_results = db.session.execute(text("""
-                SELECT e."EventName", SUM(tc."CatPrice") AS "TotalRevenue"
-                FROM "Ticket" t
-                JOIN "TicketCategory" tc ON t."CatID" = tc."CatID"
-                JOIN "Event" e ON t."EventID" = e."EventID"
-                WHERE LOWER(e."EventName") LIKE :event_name
-                GROUP BY e."EventName";
-            """), {'event_name': f"%{event_name}%"}).fetchall()
+    revenue_data = {
+        'events': [result[0] for result in revenue_results],
+        'values': [float(result[1]) for result in revenue_results]
+    }
 
-            revenue_data = {
-                'events': [result[0] for result in revenue_results],
-                'values': [float(result[1]) for result in revenue_results]
-            }
-
-            # Query ticket category data for Pie Chart
-            category_results = db.session.execute(text("""
-                SELECT tc."CatName", COUNT(t."TicketID") AS "TotalTickets"
-                FROM "Ticket" t
-                JOIN "TicketCategory" tc ON t."CatID" = tc."CatID"
-                GROUP BY tc."CatName";
-            """)).fetchall()
-
-            category_data = {
-                'names': [result[0] for result in category_results],
-                'values': [float(result[1]) for result in category_results]
-            }
-
-            # Query location data for Doughnut Chart
-            location_results = db.session.execute(text("""
-                SELECT l."VenueName", COUNT(e."EventID") AS "EventsCount"
-                FROM "Event" e
-                JOIN "Location" l ON e."LocationID" = l."LocationID"
-                GROUP BY l."VenueName";
-            """)).fetchall()
-
-            location_data = {
-                'names': [result[0] for result in location_results],
-                'values': [float(result[1]) for result in location_results]
-            }
-
-            # Return all the data as JSON
-            return jsonify({
-                'ticket_sales_data': ticket_sales_data,
-                'revenue_data': revenue_data,
-                'category_data': category_data,
-                'location_data': location_data
-            })
-
-    except Exception as e:
-        print(f"Error occurred: {e}")
-        return jsonify({'error': 'An error occurred while processing the request.'}), 500
-
-    return jsonify({'error': 'Event not found'}), 404
+    return jsonify({'ticket_sales_data': ticket_sales_data, 'revenue_data': revenue_data})
 
 
 if __name__ == "__main__":
