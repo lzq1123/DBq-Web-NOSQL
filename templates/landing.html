@@ -38,11 +38,28 @@
         height: 100%;
         object-fit: cover;
     }
-
     .overlay {
-        display: none;
-    }
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
 
+.overlay span {
+    color: white;
+    font-size: 24px;
+}
+
+.event-card:hover .overlay {
+    opacity: 1;
+}
     .event-card {
         height: 162px;
     }
@@ -92,52 +109,55 @@
         <a class="carousel-control-prev" data-slide="prev" href="#carouselExampleIndicators" role="button"><span aria-hidden="true" class="carousel-control-prev-icon"></span> <span class="sr-only">Previous</span></a>
         <a class="carousel-control-next" data-slide="next" href="#carouselExampleIndicators" role="button"><span aria-hidden="true" class="carousel-control-next-icon"></span> <span class="sr-only">Next</span></a>
 	</div>
-
-<main>
-    <!-- Hot Events Section (unchanged, keeping as-is) -->
-    <div class="container hot-events">
-        <h4><span style="font-size:100%;color:orange; margin-bottom:10px; margin-right: 2px;">&starf;</span>Hot Events</h4>
-        <div class="row">
-            {% for event in hot_events %}
-            <div class="col-md-4">
-                <a href="{{ url_for('queue', event_id=event.EventID) }}" class="event-card-link">
-                    <div class="event-card">
-                        {% if event.ImageURL %}
-                        <img src="{{ event.ImageURL }}" alt="{{ event.EventName }}" class="venue-image">
-                        {% else %}
-                        <img src="{{ url_for('static', filename='images/default.jpg') }}" alt="Default Image" class="venue-image">
-                        {% endif %}
-                    </div>
-                </a>
-            </div>
-            {% endfor %}
-            
-            <div class="col-12">
-                <a href="event" class="more-events-btn">More Events</a>
-            </div>
-    </div>
-    
-    <!-- Venue Section  -->
-    <div class="container venue">
-        <h2>Top Venues Picks</h2>
-        <div class="row">
-            {% for venue in venues %}
-                <div class="col-md-2">
-                    <a href="{{ url_for('venueinfo', LocationID=venue['LocationID']) }}">
-                        <div class="venue-card">
-                            <!-- Ensure image stretches across the card -->
-                            <img src="{{ venue['ImageURL'] }}" alt="{{ venue['VenueName'] }}" class="venue-image" onerror="this.onerror=null; this.src='/static/images/venue1.jpg';">
+    <main>
+        <!-- Hot Events Section -->
+        <div class="container hot-events">
+            <h4><span style="font-size:100%;color:orange; margin-bottom:10px; margin-right: 2px;">&starf;</span>Hot Events</h4>
+            <div class="row">
+                {% for event in hot_events %}
+                <div class="col-md-4">
+                    <a href="{{ url_for('queue', event_id=event.EventID) }}" class="event-card-link">
+                        <div class="event-card">
+                            {% if event.ImageURL %}
+                            <img src="{{ event.ImageURL }}" alt="{{ event.EventName }}" class="venue-image">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='images/default.jpg') }}" alt="Default Image" class="venue-image">
+                            {% endif %}
+                            <div class="overlay"><span>→</span></div> 
                         </div>
                     </a>
                 </div>
-            {% endfor %}
-        </div>
-        <div class="row">
-            <div class="col-12">
-                <a href="/venue" class="more-venues-btn">More Venues</a>
+                {% endfor %}
+                
+                <div class="col-12">
+                    <a href="event" class="more-events-btn">More Events</a>
+                </div>
             </div>
-    </div>
-</main>
+        </div>
+        
+        <!-- Venue Section  -->
+        <div class="container venue">
+            <h2>Top Venues Picks</h2>
+            <div class="row">
+                {% for venue in venues %}
+                    <div class="col-md-2">
+                        <a href="{{ url_for('venueinfo', LocationID=venue['LocationID']) }}">
+                            <div class="venue-card">
+                                <img src="{{ venue['ImageURL'] }}" alt="{{ venue['VenueName'] }}" class="venue-image" onerror="this.onerror=null; this.src='/static/images/venue1.jpg';">
+                                <div class="overlay"><span>→</span></div> 
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <a href="/venue" class="more-venues-btn">More Venues</a>
+                </div>
+            </div>
+        </div>
+    </main>
+    
 
 <!-- Include Footer -->
 {% include 'footer.html' %}
