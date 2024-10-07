@@ -487,22 +487,125 @@ def ticket_purchase(event_id):
             # flash('An error occurred during the purchase. Please try again.', 'error')
             return redirect(url_for('event', event_id=event_id))
 
-@app.route('/queue')
-def queue():
-    
-    return render_template('enterqueue.html')
+@app.route('/queue/<event_id>')
+def queue(event_id):
+    # Check if the user is logged in
+    user_id = session.get('user_id')
+    error_message = None
+    preferred_width = 1920
 
-@app.route('/joinqueue', methods=['POST'])
-def joinqueue():
-    userID = request.form.get('userId')
-    eventID = request.form.get('eventId')
-    QueueNo = 2
-    data = {
-      'UserID': userID,
-      'EventID': eventID,
-      'QNo':QueueNo
+    if not user_id:
+        return redirect(url_for('registersignup'))
+    
+    else:
+        event = Event.query.options(joinedload(Event.image), joinedload(Event.ticketCategory)).filter_by(EventID=event_id).first()
+        # Choose preferred image based on width
+        if event.image:
+            event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
+        else:
+            image_url = url_for('static', filename='images/default.jpg')
+
+        # Prepare event and user information for the template
+        event_image = {
+            'ImageURL': event.preferred_image.URL if event.preferred_image else url_for('static', filename='images/default.jpg')
+        }
+
+        return render_template('enterqueue.html', event_image=event_image, event=event )
+
+@app.route('/joinqueue/<event_id>', methods=['POST'])
+def joinqueue(event_id):
+    error_message = None
+    preferred_width = 1920
+
+ 
+    event = Event.query.options(joinedload(Event.image), joinedload(Event.ticketCategory)).filter_by(EventID=event_id).first()
+
+    if event.image:
+        event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
+    else:
+        image_url = url_for('static', filename='images/default.jpg')
+
+    # Prepare event and user information for the template
+    event_image = {
+        'ImageURL': event.preferred_image.URL if event.preferred_image else url_for('static', filename='images/default.jpg')
     }
-    return render_template('queue.html', data=data)
+
+    userID = session.get('user_id')
+
+    new_queue = Queue(
+        UserID=userID,
+        EventID=event_id,
+    )
+    db.session.add(new_queue)
+    db.session.commit()
+
+    queueNo = new_queue.QueueID
+
+    data = {
+        'UserID': userID,
+        'EventID': event_id,
+        'QNo': queueNo
+    }
+    
+    return render_template('queue.html', data=data, event_image=event_image, event=event)
+
+
+@app.route('/joinqueue/<event_id>/inqueue/<queue_id>')
+def inqueue(event_id, queue_id):
+    user_id = session.get('user_id')
+
+    event = Event.query.options(joinedload(Event.image), joinedload(Event.ticketCategory)).filter_by(EventID=event_id).first()
+    if not event:
+        return redirect(url_for('landing'))
+
+    # Preferred image selection
+    preferred_width = 1920
+    if event.image:
+        event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
+    else:
+        image_url = url_for('static', filename='images/default.jpg')
+
+    event_image = {
+        'ImageURL': event.preferred_image.URL if event.preferred_image else url_for('static', filename='images/default.jpg')
+    }
+
+    # Retrieve top user in queue
+    topQueue = db.session.query(Queue).filter(Queue.EventID == event_id).first()
+
+    if topQueue:
+        topUser = topQueue.UserID
+
+        # Check if the logged-in user is at the top of the queue
+        if topUser == user_id:
+            user = Users.query.get(user_id)
+
+            # Determine ticket availability
+            tickets_available = any(
+                category.SeatsAvailable > Ticket.query.filter_by(CatID=category.CatID).count()
+                for category in event.ticketCategory
+            )
+
+            # Optionally remove the user from the queue after they receive tickets or proceed
+            db.session.delete(topQueue)  # Only delete if the process completes
+            db.session.commit()
+
+            return render_template('ticket.html', 
+                                    event=event, 
+                                    event_image=event_image,
+                                    user=user,
+                                    tickets_available=tickets_available)
+        else:
+            # The current user is not the top user, just re-render queue page
+            data = {
+                'UserID': user_id,
+                'EventID': event_id,
+                'QNo': queue_id
+            }
+            return render_template('queue.html', data=data, event_image=event_image, event=event)
+
+    else:
+        return redirect(url_for('queue', event_id=event_id))
+
 
 @app.context_processor
 def inject_user():

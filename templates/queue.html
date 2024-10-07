@@ -101,27 +101,22 @@
     
     <main class="split-screen">
         <div class="left-side">
-            <img src="{{ url_for('static', filename='images/artist3.jpg') }}" alt="Taylor Swift">
-            <div class="title-description-container">
-                <h3 class="text-center mb-4" style="margin-top:10px">Taylor Swift Eras Tour</h3>
-                <div class="vertical-line"></div>
-                <div class="description">
-                    <p>
-                        Taylor Swift is an iconic American singer-songwriter known for her narrative-driven songs that often revolve around her personal life. She has evolved her musical style from country to pop, releasing critically acclaimed albums like "1989" and "Reputation." Swift has won numerous awards, including multiple Grammy Awards, and is known for her powerful songwriting, business acumen, and passionate fan base known as "Swifties."
-                    </p>
-                </div>
-            </div>
+            <img src="{{ event_image.ImageURL }}" alt="{{ event.EventName }}">
         </div>
 
         <div class="right-side">
+            {% if session.user_id %}
             <div class="form-container">
                 <h3 class="text-center mb-4">Queue Status</h3>
+                <p>You have entered the Queue, please do not leave this page.</p>
+                <p>Leaving this page would mean exiting the queue</p>
                 <p>Queue Number: {{ data['QNo'] }}</p>
                 <p>User ID: {{ data['UserID'] }}</p>
                 <p>Event ID: {{ data['EventID'] }}</p>
 
                
             </div>
+            {% endif %}
         </div>
     </main>
 
@@ -134,28 +129,8 @@
             });
         }
         window.onload = async function() {
-            var serving = 1;
-            const qno = '{{ data["QNo"] }}';
-
-            while (true) {
-                
-                if (serving != qno) {
-                    serving++;
-                    await pauseFor10Seconds() 
-
-
-                }
-                else{
-                    window.location.href = "/ticket";
-                    break;
-
-                }
-
-                // Check if the user has left the page
-                if (document.visibilityState === "hidden") {
-                    break;
-                }
-            }
+            await pauseFor10Seconds();
+            window.location.href = "{{ url_for('inqueue', event_id=event.EventID, queue_id= data['UserID']) }}";
         };
 
     </script>
