@@ -10,7 +10,6 @@ API_KEY = Config.TICKETMASTER_API_KEY
 
 def fetch_and_store_events(api_key, total_events):
     base_url = 'https://app.ticketmaster.com/discovery/v2/events.json'
-    # country_code = 'SG'
     events_fetched = 0
     page_number = 0
 
@@ -32,16 +31,16 @@ def fetch_and_store_events(api_key, total_events):
                     break
         page_number += 1
 
-def store_event(event_data):      
+def store_event(event_data):
     event_date_str = event_data['dates']['start']['dateTime']
     if event_date_str.endswith('Z'):  # Checks if the string ends with 'Z'
         event_date_str = event_date_str[:-1] + '+00:00'  # Replace 'Z' with '+00:00' which is the offset notation for UTC
-              
+    event_date = datetime.strptime(event_date_str, '%Y-%m-%dT%H:%M:%S%z')  # Correct format string
+
     event = Event(
         EventID=event_data['id'],
         EventName=event_data['name'],
-        EventDate=datetime.fromisoformat(event_data['dates']['start']['dateTime']),
-        # Description=event_data.get('info', 'No description provided'),
+        EventDate=event_date,
         LocationID=event_data['_embedded']['venues'][0]['id'],
     )
     locationID = Location.query.filter_by(LocationID=event.LocationID).first()
@@ -51,10 +50,14 @@ def store_event(event_data):
     db.session.flush()  # Flush to get the event ID for image relationship
     logging.info(f"Event name: {event.EventName}, start date: {event.EventDate}, venue name: {event.LocationID}, id: {event.EventID} stored successfully!")
 
-    min_price = event_data['priceRanges'][0]['min']
-    max_price = event_data['priceRanges'][0]['max']
+    price_ranges = event_data.get('priceRanges')
+    if price_ranges:
+        min_price = price_ranges[0]['min']
+        max_price = price_ranges[0]['max']
+        store_ticket_category(min_price, max_price, event.EventID)
+    else:
+        logging.info(f"No price ranges available for event ID: {event.EventID}")
 
-    store_ticket_category(min_price, max_price, event.EventID)
     if 'images' in event_data:
         store_image(event_data['images'], None, event.EventID)
 
@@ -87,6 +90,7 @@ def store_location(location_data):
         Country=location_data.get('country', {}).get('name', 'No Country Provided'),
         State=location_data.get('state', {}).get('name', 'No State Provided'),
         PostalCode=location_data.get('postalCode', 'No Postal Code Provided'),
+        Description=location_data.get('description')
         # Capacity = None
     )
     try:
