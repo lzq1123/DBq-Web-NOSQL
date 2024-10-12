@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime, timezone
+from datetime import datetime
 from models import db, Event, Image, Location, TicketCategory
 import logging, traceback
 from config import Config
@@ -32,11 +32,7 @@ def fetch_and_store_events(api_key, total_events):
                     break
         page_number += 1
 
-def store_event(event_data):      
-    event_date_str = event_data['dates']['start']['dateTime']
-    if event_date_str.endswith('Z'):  # Checks if the string ends with 'Z'
-        event_date_str = event_date_str[:-1] + '+00:00'  # Replace 'Z' with '+00:00' which is the offset notation for UTC
-              
+def store_event(event_data):            
     event = Event(
         EventID=event_data['id'],
         EventName=event_data['name'],
@@ -87,6 +83,7 @@ def store_location(location_data):
         Country=location_data.get('country', {}).get('name', 'No Country Provided'),
         State=location_data.get('state', {}).get('name', 'No State Provided'),
         PostalCode=location_data.get('postalCode', 'No Postal Code Provided'),
+        Description=location_data.get('description')
         # Capacity = None
     )
     try:
