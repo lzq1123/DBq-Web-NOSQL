@@ -505,5 +505,3 @@ def joinqueue():
       'QNo':QueueNo
     }
     return render_template('queue.html', data=data)
-
-
