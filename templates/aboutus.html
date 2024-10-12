@@ -4,10 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TicketGrab</title>
+
+   
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
 </head>
+<style>
+    .navbar {
+        background-color: transparent;
+        color:white
+    }
+
+    .carousel {
+        height:  70%;
+    }
+
+    .carousel-item img {
+        height: 70%;
+        object-fit: cover;
+    }
+
+    .carousel-caption {
+    position: absolute;
+    top: 20%; 
+    text-align: center; 
+    color: white;
+}
+
+
+    .carousel-caption h5 {
+        font-size: 2rem;
+    }
+
+    .carousel-caption p {
+        font-size: 1.2rem;
+    }
+
+    .statistics-section {
+        margin-top: 50px;
+    }
+
+    .chart-container {
+        width: 100%;
+        height: 400px;
+        position: relative;
+        margin-bottom: 40px;
+    }
+
+    .chart-container-small {
+        width: 400px;
+        height: 400px;
+        margin: 0 auto;
+    }
+
+    .center-text {
+        text-align: center;
+    }
+
+    .carousel-control-prev,
+    .carousel-control-next {
+        top: 50%;
+        transform: translateY(-25%);
+    }
+
+    .carousel-indicators {
+        display: none;
+    }
+
+    .filter-section {
+        margin-top: 50px;
+    }
+</style>
 <body>
     <!-- Include Navigation -->
     {% include 'nav.html' %}
@@ -52,7 +120,7 @@
     </div>
 
     <!-- Statistics Section -->
-    <div class="container statistics-section" style="margin-top:115px">
+    <div class="container statistics-section" style="margin-top:30px">
         <h3 class="text-center" style="margin-bottom:30px">Event Statistics</h3>
 
         <!-- Row 1: Ticket Categories and Events by Location -->
@@ -98,7 +166,7 @@
             <div class="input-group mb-3">
                 <select class="form-control" id="searchEvent" aria-label="Search Event">
                     {% for event in event_list %}
-                    <option value="{{ event.EventName }}" {% if event.EventName == "Phoenix Suns vs. Miami Heat" %}selected{% endif %}>{{ event.EventName }}</option>
+                    <option value="{{ event.EventName }}" {% if event.EventName == "Phoenix Suns vs. Portland Trail Blazers" %}selected{% endif %}>{{ event.EventName }}</option>
                     {% endfor %}
                 </select>
                 <div class="input-group-append">
@@ -131,7 +199,6 @@
 
     <!-- Include Footer -->
     {% include 'footer.html' %}
-
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
