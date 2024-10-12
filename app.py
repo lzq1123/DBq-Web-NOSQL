@@ -294,7 +294,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         error_message = 'You have successfully registered!'
-        return render_template('registersignup', error_message=error_message)
+        return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
     else:
         logging.error("Form Errors:", registration_form.errors)
         for field, errors in registration_form.errors.items():
