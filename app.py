@@ -276,6 +276,7 @@ def registersignup():
 def register():
     registration_form = RegistrationForm(request.form)
     login_form = LoginForm()
+    error_message = ''  # Initialize error_message at the start of the function
     if registration_form.validate_on_submit():
         email = registration_form.email.data
         existing_user = Users.query.filter_by(Email=email).first()
@@ -284,7 +285,6 @@ def register():
             return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
 
         hashed_password = bcrypt.hashpw(registration_form.password.data.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
         new_user = Users(
             Name=registration_form.name.data,
             Email=email,
@@ -295,7 +295,7 @@ def register():
         db.session.add(new_user)
         db.session.commit()
         error_message = 'You have successfully registered!'
-        return render_template('registersignup', error_message=error_message)
+        return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
     else:
         logging.error("Form Errors:", registration_form.errors)
         for field, errors in registration_form.errors.items():
@@ -365,10 +365,6 @@ def myticket():
                 ticket_details.append(ticket_info)
 
     return render_template('myticket.html', ticket_details=ticket_details)
-
-@app.route('/aboutus')
-def aboutus():
-    return render_template('aboutus.html')
 
 @app.route('/ticket/<event_id>')
 def ticket(event_id):
