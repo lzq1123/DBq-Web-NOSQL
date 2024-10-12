@@ -1,8 +1,8 @@
 <nav class="navbar navbar-expand-lg navbar-light fixed-top">
     <div class="container">
-        <a class="navbar-brand" href="/">
+        <a class="navbar-brand" href="{{ url_for('home') }}">
             <img src="{{ url_for('static', filename='images/logo.png') }}" style="height: 25px; margin-bottom:6px;" alt="Logo">
-             TicketGrab
+            TicketGrab
         </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -11,21 +11,33 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item active">
-                    <a class="nav-link" href="/">Home</a>
+                    <a class="nav-link" href="{{ url_for('home') }}">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/aboutus">About Us</a>
+                    <a class="nav-link" href="{{ url_for('aboutus') }}">About Us</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/event">Events</a>
+                    <a class="nav-link" href="{{ url_for('event') }}">Events</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/venue">Venue</a>
+                    <a class="nav-link" href="{{ url_for('venue') }}">Venue</a>
                 </li>
+                {% if user %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {{ user.Name }}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                        <a class="dropdown-item" href="{{ url_for('profile', user_id=user.UserID) }}">My Profile</a>
+                        <a class="dropdown-item" href="{{ url_for('myticket') }}">My Tickets</a>
+                        <a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a>
+                    </div>
+                </li>
+                {% else %}
                 <li class="nav-item">
-                    <a class="nav-link" href="/registersignup"><i class="fa-regular fa-circle-user"></i> Register/Sign in</a>
+                    <a class="nav-link" href="{{ url_for('registersignup') }}"><i class="fa-regular fa-circle-user"></i> Register/Sign in</a>
                 </li>
-
+                {% endif %}
             </ul>
         </div>
     </div>

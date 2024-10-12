@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, url_for, redirect
+from flask import Flask, render_template, request, session, url_for, redirect, jsonify, make_response, flash
 from config import Config
 from sqlalchemy import text, extract,and_, func
 from sqlalchemy.orm import joinedload
@@ -10,7 +10,7 @@ import bcrypt
 from auth import hash_password, verify_password, RegistrationForm, LoginForm
 import calendar
 from models import db, Users, PaymentMethod, Location, Event, Ticket, TicketCategory, Transaction, Image, Queue
-
+from werkzeug.security import generate_password_hash 
 
 app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = Config.APP_SECRET_KEY
@@ -275,7 +275,9 @@ def registersignup():
 @app.route('/register', methods=['POST'])
 def register():
     registration_form = RegistrationForm(request.form)
-    login_form = LoginForm()
+    login_form = LoginForm()  # Ensure login_form is initialized
+    error_message = None  # Initialize error_message
+
     if registration_form.validate_on_submit():
         email = registration_form.email.data
         existing_user = Users.query.filter_by(Email=email).first()
@@ -294,13 +296,17 @@ def register():
         
         db.session.add(new_user)
         db.session.commit()
+
         error_message = 'You have successfully registered!'
-        return render_template('registersignup', error_message=error_message)
+        return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
+
     else:
         logging.error("Form Errors:", registration_form.errors)
+        error_message = ""  # Initialize error_message to avoid undefined error
         for field, errors in registration_form.errors.items():
             for error in errors:
                 error_message += f"Error in the {getattr(registration_form, field).label.text} field - {error} "
+
     return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
 
 @app.route('/login', methods=['POST'])
@@ -359,16 +365,13 @@ def myticket():
                     'TranscID': transaction.TranscID,
                     'TransDate': transaction.TransDate.strftime('%d-%m-%Y %I:%M%p'),
                     'EventName': event.EventName,
-                    'TicketCount': len(transaction.ticket),  # Assuming each transaction can have multiple tickets
+                    'TicketCount': len(transaction.ticket), 
                     'Status': 'upcoming' if event.EventDate > datetime.utcnow() else 'finished'
                 }
                 ticket_details.append(ticket_info)
 
     return render_template('myticket.html', ticket_details=ticket_details)
 
-@app.route('/aboutus')
-def aboutus():
-    return render_template('aboutus.html')
 
 @app.route('/ticket/<event_id>')
 def ticket(event_id):
@@ -381,9 +384,8 @@ def ticket(event_id):
     event = Event.query.options(joinedload(Event.image), joinedload(Event.ticketCategory)).filter_by(EventID=event_id).first()
 
     if not event:
-        # flash("Event not found!", "error")
         return redirect(url_for('landing'))
-    
+
     # Determine ticket availability
     tickets_available = any(
         category.SeatsAvailable > Ticket.query.filter_by(CatID=category.CatID).count()
@@ -396,6 +398,8 @@ def ticket(event_id):
     else:
         image_url = url_for('static', filename='images/default.jpg')
 
+
+
     # Prepare event and user information for the template
     event_image = {
         'ImageURL': event.preferred_image.URL if event.preferred_image else url_for('static', filename='images/default.jpg')
@@ -405,6 +409,7 @@ def ticket(event_id):
                            event_image=event_image,
                            user=user,
                            tickets_available=tickets_available)
+
 
 @app.route('/ticket_purchase/<event_id>', methods=['POST'])
 def ticket_purchase(event_id):
@@ -700,7 +705,7 @@ def aboutus():
     """)).fetchall()
 
     # Query for ticket sales data for the default event (Phoenix Suns vs. Miami Heat)
-    default_event = 'Phoenix Suns vs. Miami Heat'
+    default_event = 'Phoenix Suns vs. Portland Trail Blazers'
     ticket_sales_results_default = db.session.execute(text("""
         SELECT e."EventDate", COUNT(t."TicketID") AS "TicketsSold"
         FROM "Ticket" t
@@ -736,7 +741,7 @@ def aboutus():
                         most_popular_event=most_popular_event, 
                         total_tickets_sold=total_tickets_sold,
                         total_events_locations=total_events_locations,
-                        ticket_sales_data=ticket_sales_data,  # General statistics
+                        ticket_sales_data=ticket_sales_data,
                         ticket_sales_dates=ticket_sales_dates,  
                         revenue_data=revenue_data,
                         revenue_event_names=revenue_event_names,  
@@ -788,6 +793,113 @@ def get_event_data():
     }
 
     return jsonify({'ticket_sales_data': ticket_sales_data, 'revenue_data': revenue_data})
+
+
+@app.route('/profile/<int:user_id>', methods=['GET', 'POST'])
+def profile(user_id):
+    user = Users.query.get_or_404(user_id)
+    payment_method = PaymentMethod.query.filter_by(UserID=user_id).first()
+
+    # If no payment method exists, provide placeholders for template
+    if payment_method is None:
+        payment_method = {
+            'CardHolderName': 'N/A',
+            'CardNumber': '0000000000000000',
+            'ExpireDate': None,  
+            'BillAddr': 'No billing address available',
+            'CVV': '000'  
+        }
+
+    return render_template('profile.html', user=user, paymentMethod=payment_method)
+
+
+
+
+# Route for updating the profile (separate POST request)
+@app.route('/profile/<int:user_id>/update', methods=['POST'])
+def update_profile(user_id):
+    user = Users.query.get_or_404(user_id)
+
+    # Get data from form submission
+    new_name = request.form.get('name')
+    new_email = request.form.get('email')
+    new_phone = request.form.get('phone')
+    new_password = request.form.get('password')
+
+    # Update user's information
+    try:
+        user.Name = new_name
+        user.Email = new_email
+        user.Phone = new_phone
+
+        # If the user enters a new password, hash it and update it
+        if new_password:
+            hashed_password = generate_password_hash(new_password)
+            user.Password = hashed_password
+
+        db.session.commit()
+        flash('Profile updated successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating profile: {str(e)}', 'danger')
+
+    return redirect(url_for('profile', user_id=user_id))
+
+@app.route('/profile/<int:user_id>/deactivate', methods=['POST'])
+def deactivate_account(user_id):
+    user = Users.query.get_or_404(user_id)
+
+    try:
+        # Delete the user from the database
+        db.session.delete(user)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error deactivating account: {str(e)}', 'danger')
+
+    return redirect(url_for('home'))
+@app.route('/update_payment/<int:user_id>', methods=['POST'])
+def update_payment(user_id):
+    payment_method = PaymentMethod.query.filter_by(UserID=user_id).first()
+    
+    payment_method.CardHolderName = request.form['cardHolderName']
+    payment_method.CardNumber = request.form['cardNumber']
+    payment_method.ExpireDate = datetime.strptime(request.form['expireDate'], '%m/%Y')
+    payment_method.BillAddr = request.form['billingAddress']
+
+    if request.form['cvv'] and request.form['cvv'] != '***':
+        payment_method.CVV = request.form['cvv']
+
+    db.session.commit()
+    flash('Payment method updated successfully!', 'success')
+
+    return redirect(url_for('profile', user_id=user_id))
+
+@app.route('/add_payment/<int:user_id>', methods=['POST'])
+def add_payment(user_id):
+    user = Users.query.get_or_404(user_id)
+
+    card_holder_name = request.form['cardHolderName']
+    card_number = request.form['cardNumber']
+    expire_date = datetime.strptime(request.form['expireDate'], '%m/%Y')
+    billing_address = request.form['billingAddress']
+    cvv = request.form['cvv']
+
+    new_payment_method = PaymentMethod(
+        UserID=user.UserID,
+        CardHolderName=card_holder_name,
+        CardNumber=card_number,
+        ExpireDate=expire_date,
+        BillAddr=billing_address,
+        CVV=cvv,
+        CardType="Visa"  # Can be handled dynamically
+    )
+
+    db.session.add(new_payment_method)
+    db.session.commit()
+
+    flash('Payment method added successfully!', 'success')
+    return redirect(url_for('profile', user_id=user_id))
 
 
 if __name__ == "__main__":
