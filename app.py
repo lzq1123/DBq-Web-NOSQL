@@ -49,6 +49,52 @@ with app.app_context():
     except Exception as e:
         logging.error(f"Error during database setup or event fetching: {e}\n{traceback.format_exc()}")
 
+# Check connection and create indexes if not already created
+with app.app_context():
+    try:
+        # Test the connection to the database
+        with db.engine.connect() as connection:
+            result = connection.execute(text("SELECT 1")).scalar()
+            print(f"Connection to database successful! Result: {result}")
+
+        # Create indexes if they don't exist
+        indexes_to_create = [
+            """
+            DO $$ 
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_ticket_event') THEN
+                    CREATE INDEX idx_ticket_event ON "Ticket"("EventID");
+                END IF;
+            END $$;
+            """,
+            """
+            DO $$ 
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_ticket_cat') THEN
+                    CREATE INDEX idx_ticket_cat ON "TicketCategory"("CatID");
+                END IF;
+            END $$;
+            """,
+            """
+            DO $$ 
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_ticket_event_date') THEN
+                    CREATE INDEX idx_ticket_event_date ON "Ticket"("EventID");
+                END IF;
+            END $$;
+            """
+        ]
+
+        # Execute the index creation queries
+        for query in indexes_to_create:
+            with db.engine.connect() as connection:
+                connection.execute(text(query))
+        print("Indexes checked and created if necessary.")
+
+    except Exception as e:
+        logging.error(f"Error during index creation: {e}\n{traceback.format_exc()}")
+
+
 # Routes
 @app.route('/')
 def home():
