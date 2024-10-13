@@ -1013,6 +1013,29 @@ def add_payment(user_id):
     flash('Payment method added successfully!', 'success')
     return redirect(url_for('profile', user_id=user_id))
 
+@app.route('/delete_payment/<int:user_id>', methods=['POST'])
+def delete_payment(user_id):
+    payment_method = PaymentMethod.query.filter_by(UserID=user_id).first()
+
+    if payment_method:
+        try:
+            # Set CardID to NULL for all transactions associated with this payment method
+            db.session.execute(
+                text('UPDATE "Transactions" SET "CardID" = NULL WHERE "CardID" = :card_id'),
+                {'card_id': payment_method.CardID}
+            )
+            
+            # Now delete the payment method
+            db.session.delete(payment_method)
+            db.session.commit()
+
+            flash('Payment method deleted successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error deleting payment method: {str(e)}', 'danger')
+    
+    return redirect(url_for('profile', user_id=user_id))
+
 
 
 if __name__ == "__main__":
