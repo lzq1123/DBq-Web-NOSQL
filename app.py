@@ -360,7 +360,6 @@ def myticket():
     # Prepare data for the template
     ticket_details = []
     for transaction in transactions:
-        # Each transaction may have multiple tickets
         for ticket in transaction.ticket:
             event = ticket.ticketCategory.event if ticket.ticketCategory else None
             if event:
@@ -368,13 +367,12 @@ def myticket():
                     'TranscID': transaction.TranscID,
                     'TransDate': transaction.TransDate.strftime('%d-%m-%Y %I:%M%p'),
                     'EventName': event.EventName,
-                    'TicketCount': len(transaction.ticket), 
+                    'SeatNo': ticket.SeatNo,
                     'Status': 'upcoming' if event.EventDate > datetime.utcnow() else 'finished'
                 }
                 ticket_details.append(ticket_info)
 
     return render_template('myticket.html', ticket_details=ticket_details)
-
 
 @app.route('/ticket/<event_id>')
 def ticket(event_id):
@@ -481,9 +479,15 @@ def ticket_purchase(event_id):
         db.session.add(transaction)
         db.session.flush()
 
-        # Create tickets
+    # Create tickets
         tickets = []
-        start_seat_number = ticket_category.SeatsAvailable - quantity + 1
+        highest_seat = db.session.query(db.func.max(Ticket.SeatNo)).filter_by(CatID=category_id).scalar()
+        highest_seat = highest_seat or 0
+        if highest_seat >= ticket_category.SeatsAvailable:
+            # flash('Not enough tickets available', 'error')
+            return redirect(url_for('event', event_id=event_id))
+        
+        start_seat_number = highest_seat + 1
         for i in range(quantity):
             seat_number = start_seat_number + i
             ticket = Ticket(

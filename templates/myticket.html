@@ -52,7 +52,7 @@
                         <th>Order No.</th>
                         <th>Order Time</th>
                         <th>Order Name</th>
-                        <th>Amount of Tickets</th>
+                        <th>Seat No.</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -63,7 +63,8 @@
                             <td>{{ ticket.TranscID }}</td>
                             <td>{{ ticket.TransDate }}</td>
                             <td>{{ ticket.EventName }}</td>
-                            <td>{{ ticket.TicketCount }}</td>
+                            <td>{{ ticket.SeatNo }}</td>
+                            <!-- <td>{{ ticket.Status }}</td> -->
                         </tr>
                     {% endif %}
                 {% endfor %}
@@ -75,7 +76,8 @@
                             <td>{{ ticket.TranscID }}</td>
                             <td>{{ ticket.TransDate }}</td>
                             <td>{{ ticket.EventName }}</td>
-                            <td>{{ ticket.TicketCount }}</td>
+                            <td>{{ ticket.SeatNo }}</td>
+                            <!-- <td>{{ ticket.Status }}</td> -->
                         </tr>
                     {% endif %}
                 {% endfor %}
