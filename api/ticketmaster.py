@@ -23,7 +23,7 @@ def fetch_and_store_events(api_key, total_events):
     seen_event_ids = set()
     seen_event_names = set()
 
-    existing_event_names = {event.name for event in db.session.query(Event.EventName).all()}
+    existing_event_names = {event.EventName for event in db.session.query(Event.EventName).all()}
     seen_event_names.update(existing_event_names)
 
     while events_fetched < total_events:
