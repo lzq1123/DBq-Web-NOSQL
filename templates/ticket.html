@@ -112,9 +112,9 @@
                         {% if event.ticketCategory %}
                         <select class="form-control" id="category" name="category" onchange="calculateTotal()">
                             {% for category in event.ticketCategory %}
-                                {% if category.SeatsAvailable > 0 %}
-                                <option value="{{ category.CatPrice }}">{{ category.CatName }} - ${{ '%.2f'|format(category.CatPrice) }}</option>
-                                {% endif %}
+                            <option value="{{ category.CatID }}" data-price="{{ '%.2f'|format(category.CatPrice) }}">
+                                {{ category.CatName }} - ${{ '%.2f'|format(category.CatPrice) }}
+                            </option>
                             {% endfor %}
                         </select>
                         {% else %}
@@ -201,8 +201,9 @@
             const quantityInput = document.getElementById('quantity');
             const totalPriceElement = document.getElementById('total-price');
 
-            const pricePerTicket = parseFloat(categorySelect.value);
-            const quantity = parseFloat(quantityInput.value);
+            const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+            const pricePerTicket = parseFloat(selectedOption.getAttribute('data-price'));
+            const quantity = parseInt(quantityInput.value, 10);
             const totalPrice = pricePerTicket * quantity;
 
             totalPriceElement.textContent = `Total: $${totalPrice.toFixed(2)}`;
