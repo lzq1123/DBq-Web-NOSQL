@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, session, url_for, redirect, j
 from config import Config
 from sqlalchemy import text, extract,and_, func
 from sqlalchemy.orm import joinedload
+from sqlalchemy.sql import exists
 from api.ticketmaster import fetch_and_store_events
 import logging, traceback
 from datetime import datetime
@@ -21,6 +22,7 @@ API_KEY = Config.TICKETMASTER_API_KEY
 
 # Check connection and create tables if not already created
 with app.app_context():
+    events_to_fetch = 20
     try:
         # Test the connection to the database
         with db.engine.connect() as connection:
@@ -34,11 +36,17 @@ with app.app_context():
         if not tables:
             db.create_all()
             logging.info("Tables created successfully!")
-            fetch_and_store_events(API_KEY, 50)
+
+        current_event_count = db.session.query(Event).count()
+        print(f"Currently {current_event_count} events in the database.")
+
+        if current_event_count < events_to_fetch:
+            print(f"Less than {events_to_fetch} events found in the database, fetching more events...")
+            fetch_and_store_events(API_KEY, events_to_fetch - current_event_count)
         else:
-            print("All tables are already created, no action needed.")
+            print("Sufficient events are already stored in the database, no action needed.")
     except Exception as e:
-        logging.error(f"Error:{e}\n{traceback.format_exc()}")
+        logging.error(f"Error during database setup or event fetching: {e}\n{traceback.format_exc()}")
 
 # Routes
 @app.route('/')
@@ -397,17 +405,17 @@ def ticket(event_id):
     else:
         image_url = url_for('static', filename='images/default.jpg')
 
-
-
     # Prepare event and user information for the template
     event_image = {
         'ImageURL': event.preferred_image.URL if event.preferred_image else url_for('static', filename='images/default.jpg')
     }
     return render_template('ticket.html', 
-                           event=event, 
+                           event=event,
+                           calendar=calendar,
                            event_image=event_image,
                            user=user,
-                           tickets_available=tickets_available)
+                           tickets_available=tickets_available,
+                           payment_method=PaymentMethod.query.filter_by(UserID=user_id).first())
 
 
 @app.route('/ticket_purchase/<event_id>', methods=['POST'])
@@ -444,19 +452,29 @@ def ticket_purchase(event_id):
         expiry_year = request.form.get('expiry-year')
         billing_address = request.form.get('billing-address')
 
-        payment_method = PaymentMethod(
-            UserID=user_id,
-            CardNumber=card_number,
-            CVV=cvv,
-            CardType='Unknown',
-            ExpireDate=datetime(int(expiry_year), int(expiry_month), 1),
-            BillAddr=billing_address,
-            CardHolderName=cardholder_name
-        )
-        db.session.add(payment_method)
-        db.session.flush()
+        payment_method = PaymentMethod.query.filter_by(UserID=user_id).first()
+        if payment_method:
+            # Update existing payment method
+            payment_method.CVV = cvv
+            payment_method.ExpireDate = datetime(int(expiry_year), int(expiry_month), 1)
+            payment_method.BillAddr = billing_address
+            payment_method.CardHolderName = cardholder_name
+        else:
+            # Create new payment method
+            payment_method = PaymentMethod(
+                UserID=user_id,
+                CardNumber=card_number,
+                CVV=cvv,
+                CardType='Unknown',
+                ExpireDate=datetime(int(expiry_year), int(expiry_month), 1),
+                BillAddr=billing_address,
+                CardHolderName=cardholder_name
+            )
+            db.session.add(payment_method)
 
-# Create transaction
+        db.session.commit()
+
+        # Create transaction
         total_price = ticket_category.CatPrice * quantity
         transaction = Transaction(
             TranAmount=total_price,
@@ -490,7 +508,7 @@ def ticket_purchase(event_id):
 
     except Exception as e:
             db.session.rollback()
-            logging.error(f"Error during ticket purchase: {e}")
+            logging.error(f"Error during ticket purchase: {e}\n{traceback.format_exc()}")
             # flash('An error occurred during the purchase. Please try again.', 'error')
             return redirect(url_for('event', event_id=event_id))
 
@@ -521,38 +539,54 @@ def queue(event_id):
 
 @app.route('/joinqueue/<event_id>', methods=['POST'])
 def joinqueue(event_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('registersignup'))
+    user = Users.query.get(user_id)
+    if not user:
+        flash('User does not exist.', 'error')
+        return redirect(url_for('landing'))
+    
     error_message = None
     preferred_width = 1920
-
- 
     event = Event.query.options(joinedload(Event.image), joinedload(Event.ticketCategory)).filter_by(EventID=event_id).first()
+    if not event:
+        flash('Event not found.', 'error')
+        return redirect(url_for('landing'))
 
+    existing_queue = Queue.query.filter_by(UserID=user_id, EventID=event_id).first()
+    if existing_queue:
+        flash('You are already in the queue for this event.', 'info')
+        return redirect(url_for('event', event_id=event_id))
     if event.image:
         event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
     else:
         image_url = url_for('static', filename='images/default.jpg')
-
-    # Prepare event and user information for the template
+    
     event_image = {
         'ImageURL': event.preferred_image.URL if event.preferred_image else url_for('static', filename='images/default.jpg')
     }
 
-    userID = session.get('user_id')
+    try:
+        new_queue = Queue(
+            UserID=user_id,
+            EventID=event_id,
+        )
+        db.session.add(new_queue)
+        db.session.commit()
 
-    new_queue = Queue(
-        UserID=userID,
-        EventID=event_id,
-    )
-    db.session.add(new_queue)
-    db.session.commit()
+        queueNo = new_queue.QueueID
 
-    queueNo = new_queue.QueueID
+        data = {
+            'UserID': user_id,
+            'EventID': event_id,
+            'QNo': queueNo
+        }
 
-    data = {
-        'UserID': userID,
-        'EventID': event_id,
-        'QNo': queueNo
-    }
+    except Exception as e:
+        db.session.rollback()
+        flash('Failed to join the queue. Please try again.', 'error')
+        logging.error(f"Error during queue addition: {e}")
     
     return render_template('queue.html', data=data, event_image=event_image, event=event)
 
@@ -595,12 +629,15 @@ def inqueue(event_id, queue_id):
             # Optionally remove the user from the queue after they receive tickets or proceed
             db.session.delete(topQueue)  # Only delete if the process completes
             db.session.commit()
-
+        
             return render_template('ticket.html', 
-                                    event=event, 
-                                    event_image=event_image,
-                                    user=user,
-                                    tickets_available=tickets_available)
+                                event=event,
+                                calendar=calendar,
+                                event_image=event_image,
+                                user=user,
+                                tickets_available=tickets_available,
+                                payment_method=PaymentMethod.query.filter_by(UserID=user_id).first())
+
         else:
             # The current user is not the top user, just re-render queue page
             data = {
@@ -730,6 +767,37 @@ def aboutus():
     revenue_event_names_default = [result[0] for result in revenue_results_default]
     revenue_data_default = [result[1] for result in revenue_results_default]
 
+    # Query to get average daily sales per hour
+    purchase_times_results = db.session.execute(text("""
+        WITH HourlySales AS (
+            SELECT
+                DATE(t."TransDate") AS sale_date,
+                EXTRACT(HOUR FROM t."TransDate") AS sale_hour,
+                COUNT(*) AS num_sales
+            FROM "Transaction" t
+            GROUP BY sale_date, sale_hour
+        )
+        SELECT sale_hour, AVG(num_sales) AS avg_sales
+        FROM HourlySales
+        GROUP BY sale_hour
+        ORDER BY sale_hour;
+    """)).fetchall()
+
+    purchase_hours = [f"{int(result[0]):02}:00" for result in purchase_times_results]
+    average_sales = [float(result[1]) for result in purchase_times_results]
+
+    # Query for revenue per event type
+    revenue_per_event_type_results = db.session.execute(text("""
+        SELECT e."EventType", SUM(tc."CatPrice") AS "TotalRevenue"
+        FROM "Ticket" t
+        JOIN "TicketCategory" tc ON t."CatID" = tc."CatID"
+        JOIN "Event" e ON t."EventID" = e."EventID"
+        GROUP BY e."EventType"
+    """)).fetchall()
+
+    event_types = [result[0] for result in revenue_per_event_type_results]
+    revenues = [float(result[1]) for result in revenue_per_event_type_results]
+    
     # Debugging print statements
     print("Ticket Sales Dates for Default Event:", ticket_sales_dates_default)
     print("Ticket Sales Data for Default Event:", ticket_sales_data_default)
@@ -737,6 +805,10 @@ def aboutus():
     print("Revenue Data for Default Event:", revenue_data_default)
 
     return render_template('aboutus.html', 
+                        event_types=event_types,
+                        revenues=revenues,
+                        purchase_hours=purchase_hours,
+                        average_sales=average_sales,
                         most_popular_event=most_popular_event, 
                         total_tickets_sold=total_tickets_sold,
                         total_events_locations=total_events_locations,

@@ -41,7 +41,7 @@ class Event(db.Model):
     EventID = db.Column(db.String(20), primary_key=True)
     EventName = db.Column(db.String(100), nullable=False)
     EventDate = db.Column(db.DateTime, nullable=False)
-    # Description = db.Column(db.String(300))
+    EventType = db.Column(db.String(100))
     LocationID = db.Column(db.String(20), db.ForeignKey('Location.LocationID'))
     ticketCategory = db.relationship('TicketCategory', back_populates='event')
     queue = db.relationship('Queue', back_populates='event')
