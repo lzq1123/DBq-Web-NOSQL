@@ -113,7 +113,7 @@
                         <select class="form-control" id="category" name="category" onchange="calculateTotal()">
                             {% for category in event.ticketCategory %}
                                 {% if category.SeatsAvailable > 0 %}
-                                    <option value="{{ category.CatID }}">{{ category.CatName }} - ${{ category.CatPrice }}</option>
+                                <option value="{{ category.CatPrice }}">{{ category.CatName }} - ${{ '%.2f'|format(category.CatPrice) }}</option>
                                 {% endif %}
                             {% endfor %}
                         </select>
@@ -128,7 +128,7 @@
 
                     <div class="payment-form text-center">
                         <h5>Payment Information</h5>
-                        <div class="total-price" id="total-price">Total: $100</div>
+                        <div class="total-price" id="total-price">Total:</div>
                         <div class="form-group">
                             <label for="cardholder-name">Cardholder Name</label>
                             <input type="text" class="form-control" id="cardholder-name" name="cardholder-name" placeholder="Enter cardholder name" value="{{ payment_method.CardHolderName if payment_method else '' }}">
@@ -201,11 +201,11 @@
             const quantityInput = document.getElementById('quantity');
             const totalPriceElement = document.getElementById('total-price');
 
-            const pricePerTicket = parseInt(categorySelect.value);
-            const quantity = parseInt(quantityInput.value);
+            const pricePerTicket = parseFloat(categorySelect.value);
+            const quantity = parseFloat(quantityInput.value);
             const totalPrice = pricePerTicket * quantity;
 
-            totalPriceElement.textContent = `Total: $${totalPrice}`;
+            totalPriceElement.textContent = `Total: $${totalPrice.toFixed(2)}`;
         }
 
         window.onload = calculateTotal;
