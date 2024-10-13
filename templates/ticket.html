@@ -131,51 +131,44 @@
                         <div class="total-price" id="total-price">Total: $100</div>
                         <div class="form-group">
                             <label for="cardholder-name">Cardholder Name</label>
-                            <input type="text" class="form-control" id="cardholder-name" name="cardholder-name" placeholder="Enter cardholder name">
+                            <input type="text" class="form-control" id="cardholder-name" name="cardholder-name" placeholder="Enter cardholder name" value="{{ payment_method.CardHolderName if payment_method else '' }}">
                         </div>
                         <div class="form-group">
                             <label for="card-number">Card Number</label>
-                            <input type="text" class="form-control" id="card-number" name="card-number" placeholder="Enter card number" oninput="validateCard()">
+                            <input type="text" class="form-control" id="card-number" name="card-number" placeholder="Enter card number" value="{{ payment_method.CardNumber if payment_method else '' }}" oninput="validateCard()">
                         </div>
                         <div id="card-validation-message" class="text-danger"></div>
                         <div class="form-group">
                             <label for="cvv">CVV</label>
-                            <input type="text" class="form-control" id="cvv" name="cvv" placeholder="Enter CVV">
+                            <input type="text" class="form-control" id="cvv" name="cvv" placeholder="Enter CVV" value="{{ payment_method.CVV if payment_method else '' }}">
                         </div>
-
                         <div class="form-group">
                             <label for="expiry-month">Expiration Date</label>
                             <div class="d-flex">
                                 <select id="expiry-month" name="expiry-month" class="form-control" style="margin-right: 10px;">
-                                    <option value="" disabled selected>Month</option>
-                                    <option value="01">01 - January</option>
-                                    <option value="02">02 - February</option>
-                                    <option value="03">03 - March</option>
-                                    <option value="04">04 - April</option>
-                                    <option value="05">05 - May</option>
-                                    <option value="06">06 - June</option>
-                                    <option value="07">07 - July</option>
-                                    <option value="08">08 - August</option>
-                                    <option value="09">09 - September</option>
-                                    <option value="10">10 - October</option>
-                                    <option value="11">11 - November</option>
-                                    <option value="12">12 - December</option>
+                                    <option value="" disabled>Month</option>
+                                    {% for i in range(1, 13) %}
+                                    <option value="{{ '{:02}'.format(i) }}" 
+                                    {{ 'selected' if payment_method and payment_method.ExpireDate.strftime('%m') == '{:02}'.format(i) else '' }}>
+                                    {{ '{:02}'.format(i) }} - {{ calendar.month_name[i] }}
+                                    </option>
+                                    {% endfor %}
                                 </select>
-                                <select id="expiry-year" name="expiry-year" class="form-control">
+                                <select id="expiry-year" name="expiry-year" class="form-control" data-expire-year="{{ payment_method.ExpireDate.strftime('%Y') if payment_method else '' }}">
                                     <option value="" disabled selected>Year</option>
                                     <script>
                                         const currentYear = new Date().getFullYear();
+                                        const expireYear = document.getElementById('expiry-year').getAttribute('data-expire-year');
                                         for (let i = currentYear; i <= currentYear + 10; i++) {
-                                            document.write(`<option value="${i}">${i}</option>`);
+                                            document.write(`<option value="${i}" ${expireYear && parseInt(expireYear) === i ? 'selected' : ''}>${i}</option>`);
                                         }
                                     </script>
                                 </select>
                             </div>
                         </div>
-
                         <div class="form-group">
                             <label for="billing-address">Billing Address</label>
-                            <input type="text" class="form-control" id="billing-address" name="billing-address" placeholder="Enter billing address">
+                            <input type="text" class="form-control" id="billing-address" name="billing-address" placeholder="Enter billing address" value="{{ payment_method.BillAddr if payment_method else '' }}">
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">Submit Payment</button>
                     </div>

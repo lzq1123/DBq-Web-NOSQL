@@ -156,6 +156,25 @@
         </div>
     </div>
 
+    <!-- Row 3: Histogram of Peak Booking Times and Revenue Per Event Type Chart -->
+
+    <div class="row">
+        <div class="col-md-6">
+            <h5 class="center-text">Peak Booking Times</h5>
+            <div class="chart-container mt-4">
+                <canvas id="avgDailySalesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <h5 class="center-text">Revenue Per Event Type</h5>
+            <div class="chart-container mt-4">
+                <canvas id="revenuePerEventTypeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Default Event Statistics -->
     <div class="container statistics-section" style="margin-top: 50px;">
 <!-- Search Bar Section -->
@@ -366,6 +385,72 @@ document.getElementById('applyButton').addEventListener('click', function() {
             }
         });
 
+        // Histogram for Peak Booking Times
+        var ctxAvgSales = document.getElementById('avgDailySalesChart').getContext('2d');
+        var avgDailySalesChart = new Chart(ctxAvgSales, {
+            type: 'bar',
+            data: {
+                labels: {{ purchase_hours | tojson }},
+                datasets: [{
+                    label: 'Average Sales',
+                    data: {{ average_sales | tojson }},
+                    backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Hour of the Day'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Average Number of Sales'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // Setup for Revenue Per Event Type Pie Chart
+        var ctxRevenuePerEventType = document.getElementById('revenuePerEventTypeChart').getContext('2d');
+        var revenuePerEventTypeChart = new Chart(ctxRevenuePerEventType, {
+            type: 'pie',
+            data: {
+                labels: {{ event_types | tojson }},
+                datasets: [{
+                    label: 'Revenue by Event Type',
+                    data: {{ revenues | tojson }},
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            }
+        });
+        
         // Bar Chart for Total Revenue 
         var ctxDefault2 = document.getElementById('revenueChartDefault').getContext('2d');
         var revenueChartDefault = new Chart(ctxDefault2, {
