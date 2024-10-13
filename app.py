@@ -10,7 +10,7 @@ import calendar
 import bcrypt
 from auth import hash_password, verify_password, RegistrationForm, LoginForm
 import calendar
-from models import db, Users, PaymentMethod, Location, Event, Ticket, TicketCategory, Transaction, Image, Queue
+from models import db, Users, PaymentMethod, Location, Event, Ticket, TicketCategory, Transactions, Image, Queue
 from werkzeug.security import generate_password_hash 
 
 app = Flask(__name__, static_folder='static')
@@ -57,12 +57,12 @@ def home():
     hot_events_info = db.session.query(
         Event.EventID,
         Event.EventName,
-        func.count(Transaction.TranscID).label('transaction_count')
+        func.count(Transactions.TranscID).label('transaction_count')
     ).join(Event.ticketCategory) \
       .join(TicketCategory.ticket) \
       .join(Ticket.transaction) \
       .group_by(Event.EventID) \
-      .order_by(func.count(Transaction.TranscID).desc()) \
+      .order_by(func.count(Transactions.TranscID).desc()) \
       .limit(6) \
       .all()
 
@@ -272,13 +272,9 @@ def venueinfo(LocationID):
 
     return render_template('venueinfo.html', venue=venue, image_url=image_url)
 
-
-
 @app.route('/registersignup')
 def registersignup():
-    registration_form = RegistrationForm()
-    login_form = LoginForm()
-    return render_template('registersignup.html', registration_form=registration_form, login_form=login_form)
+    return render_template('registersignup.html', registration_form=RegistrationForm(), login_form=LoginForm())
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -305,7 +301,7 @@ def register():
         db.session.commit()
 
         error_message = 'You have successfully registered!'
-        return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
+        return render_template('landing.html', error_message=error_message)
 
     else:
         logging.error("Form Errors:", registration_form.errors)
@@ -355,11 +351,11 @@ def myticket():
         return redirect(url_for('registersignup'))
 
     # Load transactions and related tickets, ticket categories, and events
-    transactions = Transaction.query.options(
-        joinedload(Transaction.ticket)
+    transactions = Transactions.query.options(
+        joinedload(Transactions.ticket)
         .joinedload(Ticket.ticketCategory)
         .joinedload(TicketCategory.event)
-    ).filter(Transaction.UserID == user_id).all()
+    ).filter(Transactions.UserID == user_id).all()
 
     # Prepare data for the template
     ticket_details = []
@@ -476,7 +472,7 @@ def ticket_purchase(event_id):
 
         # Create transaction
         total_price = ticket_category.CatPrice * quantity
-        transaction = Transaction(
+        transaction = Transactions(
             TranAmount=total_price,
             TranStatus='Completed',
             UserID=user_id,
@@ -544,8 +540,8 @@ def joinqueue(event_id):
         return redirect(url_for('registersignup'))
     user = Users.query.get(user_id)
     if not user:
-        flash('User does not exist.', 'error')
-        return redirect(url_for('landing'))
+        error_message = 'Please log in first'
+        return render_template('registersignup.html', error_message=error_message, registration_form=RegistrationForm(), login_form=LoginForm())
     
     error_message = None
     preferred_width = 1920
@@ -774,7 +770,7 @@ def aboutus():
                 DATE(t."TransDate") AS sale_date,
                 EXTRACT(HOUR FROM t."TransDate") AS sale_hour,
                 COUNT(*) AS num_sales
-            FROM "Transaction" t
+            FROM "Transactions" t
             GROUP BY sale_date, sale_hour
         )
         SELECT sale_hour, AVG(num_sales) AS avg_sales

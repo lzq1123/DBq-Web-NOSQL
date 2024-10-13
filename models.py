@@ -11,7 +11,7 @@ class Users(db.Model):
     Password = db.Column(db.String(128), nullable=False)  
     Phone = db.Column(db.String(20), nullable=False)
     paymentMethod = db.relationship('PaymentMethod', back_populates='users', uselist=False)
-    transaction = db.relationship('Transaction', back_populates='users')
+    transaction = db.relationship('Transactions', back_populates='users')
 
 class PaymentMethod(db.Model):
     __tablename__ = 'PaymentMethod'
@@ -54,8 +54,8 @@ class Ticket(db.Model):
     EventID = db.Column(db.String(20), db.ForeignKey('Event.EventID'))
     SeatNo = db.Column(db.Integer, nullable=False)
     Status = db.Column(db.String(20), nullable=False)
-    TranscID = db.Column(db.Integer, db.ForeignKey('Transaction.TranscID'))
-    transaction = db.relationship('Transaction', back_populates='ticket')
+    TranscID = db.Column(db.Integer, db.ForeignKey('Transactions.TranscID'))
+    transaction = db.relationship('Transactions', back_populates='ticket')
     ticketCategory = db.relationship('TicketCategory', back_populates='ticket')
 class TicketCategory(db.Model):
     __tablename__ = 'TicketCategory'
@@ -66,8 +66,8 @@ class TicketCategory(db.Model):
     SeatsAvailable = db.Column(db.Numeric, nullable=False)
     ticket = db.relationship('Ticket', back_populates='ticketCategory')
     event = db.relationship('Event', back_populates='ticketCategory') 
-class Transaction(db.Model):
-    __tablename__ = 'Transaction'
+class Transactions(db.Model):
+    __tablename__ = 'Transactions'
     TranscID = db.Column(db.Integer, primary_key=True)
     TranAmount = db.Column(db.Numeric, nullable=False)
     TransDate = db.Column(db.DateTime, default=datetime.utcnow)
