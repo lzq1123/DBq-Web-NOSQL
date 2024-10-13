@@ -12,6 +12,7 @@ from auth import hash_password, verify_password, RegistrationForm, LoginForm
 import calendar
 from models import db, Users, PaymentMethod, Location, Event, Ticket, TicketCategory, Transactions, Image, Queue
 from werkzeug.security import generate_password_hash 
+from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = Config.APP_SECRET_KEY
@@ -276,6 +277,7 @@ def venueinfo(LocationID):
 def registersignup():
     return render_template('registersignup.html', registration_form=RegistrationForm(), login_form=LoginForm())
 
+
 @app.route('/register', methods=['POST'])
 def register():
     registration_form = RegistrationForm(request.form)
@@ -284,11 +286,16 @@ def register():
 
     if registration_form.validate_on_submit():
         email = registration_form.email.data
+
+        # Check if email already exists in the database
         existing_user = Users.query.filter_by(Email=email).first()
+        
         if existing_user:
+            # If email exists, return an error message
             error_message = 'Email already registered.'
             return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
 
+        # If email doesn't exist, proceed to create new user
         hashed_password = bcrypt.hashpw(registration_form.password.data.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         new_user = Users(
             Name=registration_form.name.data,
@@ -296,20 +303,30 @@ def register():
             Password=hashed_password,
             Phone=registration_form.phone.data
         )
-        
-        db.session.add(new_user)
-        db.session.commit()
 
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()  # Rollback the session if there's a database error
+            error_message = 'A database error occurred. Please try again.'
+            return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
+
+        # Success message
         error_message = 'You have successfully registered!'
         return render_template('landing.html', error_message=error_message)
 
     else:
-        logging.error("Form Errors:", registration_form.errors)
-        error_message = ""  # Initialize error_message to avoid undefined error
+        # Log form errors for debugging
+        logging.error(f"Form Errors: {registration_form.errors}")
+
+        # Generate error messages for the form fields
+        error_message = ""
         for field, errors in registration_form.errors.items():
             for error in errors:
-                error_message += f"Error in the {getattr(registration_form, field).label.text} field - {error} "
+                error_message += f"Error in the {getattr(registration_form, field).label.text} field - {error}. "
 
+    # Return form with error messages if validation fails
     return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
 
 @app.route('/login', methods=['POST'])
