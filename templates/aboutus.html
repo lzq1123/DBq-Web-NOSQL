@@ -53,10 +53,11 @@
     }
 
     .chart-container-small {
-        width: 400px;
-        height: 400px;
-        margin: 0 auto;
-    }
+    width: 300px; 
+    height: 300px; 
+    margin: 0 auto;
+}
+
 
     .center-text {
         text-align: center;
@@ -154,25 +155,30 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Row 3: Histogram of Peak Booking Times and Revenue Per Event Type Chart -->
+        <div class="row d-flex justify-content-center">
+            <div class="col-md-6">
+                <h5 class="center-text">Revenue Per Event Type</h5>
+                <div class="chart-container-small mt-4">
+                    <canvas id="revenuePerEventTypeChart"></canvas>
+                </div>
+            </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <h5 class="center-text">Peak Booking Times</h5>
-            <div class="chart-container mt-4">
-                <canvas id="avgDailySalesChart"></canvas>
+                <!-- Row 3: Histogram of Peak Booking Times and Revenue Per Event Type Chart -->
+            <div class="col-md-6">
+                <h5 style="margin-bottom: 12%;"class="center-text">Peak Booking Times</h5>
+                <div  class="chart-container mt-4" >
+                    <canvas id="avgDailySalesChart"></canvas>
+                </div>
             </div>
         </div>
-
-        <div class="col-md-6">
-            <h5 class="center-text">Revenue Per Event Type</h5>
-            <div class="chart-container mt-4">
-                <canvas id="revenuePerEventTypeChart"></canvas>
-            </div>
-        </div>
+    
     </div>
+
+
+
+    
+ 
 
 
     <!-- Default Event Statistics -->
