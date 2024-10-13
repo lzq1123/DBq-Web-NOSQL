@@ -896,9 +896,21 @@ def get_event_data():
 
 @app.route('/profile/<int:user_id>', methods=['GET', 'POST'])
 def profile(user_id):
+    # Check if the user is logged in
+    if 'user_id' not in session:
+        return redirect(url_for('login'))  # Redirect to login if not authenticated
+
+    # Get the current user's ID from the session
+    current_user_id = session['user_id']
+
+    # If the logged-in user ID does not match the requested user ID, deny access
+    if current_user_id != user_id:
+        return "Access Denied", 403  # Return an error message or redirect to an error page
+
     user = Users.query.get_or_404(user_id)
     payment_method = PaymentMethod.query.filter_by(UserID=user_id).first()
     current_year = datetime.now().year
+
     # If no payment method exists, provide placeholders for template
     if payment_method is None:
         payment_method = {
