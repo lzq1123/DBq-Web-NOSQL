@@ -350,29 +350,56 @@ def myticket():
     if not user_id:
         return redirect(url_for('registersignup'))
 
-    # Load transactions and related tickets, ticket categories, and events
-    transactions = Transactions.query.options(
-        joinedload(Transactions.ticket)
-        .joinedload(Ticket.ticketCategory)
-        .joinedload(TicketCategory.event)
-    ).filter(Transactions.UserID == user_id).all()
+    # Use the query to get transaction and ticket details
+    results = db.session.execute(text('''
+        SELECT 
+            u."Name" AS user_name,
+            u."Email" AS user_email,
+            e."EventName" AS event_name,
+            e."EventDate" AS event_date,  -- Compare event date to determine status
+            t."SeatNo" AS seat_number,
+            tc."CatName" AS seat_category,  -- Seat category only for events
+            tr."TranAmount" AS transaction_amount,
+            tr."TranStatus" AS transaction_status,
+            tr."TransDate" AS transaction_date,
+            tr."TranscID" AS transaction_id
+        FROM "Users" u
+        JOIN "Transactions" tr ON u."UserID" = tr."UserID"
+        JOIN "Ticket" t ON t."TranscID" = tr."TranscID"
+        JOIN "Event" e ON t."EventID" = e."EventID"
+        JOIN "TicketCategory" tc ON t."CatID" = tc."CatID"  -- Join for seat category
+        WHERE u."UserID" = :user_id
+        ORDER BY tr."TransDate" DESC;
+    '''), {'user_id': user_id}).fetchall()
 
-    # Prepare data for the template
+    # Prepare data for tickets and transactions
     ticket_details = []
-    for transaction in transactions:
-        for ticket in transaction.ticket:
-            event = ticket.ticketCategory.event if ticket.ticketCategory else None
-            if event:
-                ticket_info = {
-                    'TranscID': transaction.TranscID,
-                    'TransDate': transaction.TransDate.strftime('%d-%m-%Y %I:%M%p'),
-                    'EventName': event.EventName,
-                    'SeatNo': ticket.SeatNo,
-                    'Status': 'upcoming' if event.EventDate > datetime.utcnow() else 'finished'
-                }
-                ticket_details.append(ticket_info)
+    transaction_details = []
 
-    return render_template('myticket.html', ticket_details=ticket_details)
+    for row in results:
+        # Ticket details for upcoming and finished events, comparing event date
+        ticket_info = {
+            'TranscID': row.transaction_id,
+            'TransDate': row.transaction_date.strftime('%d-%m-%Y %I:%M%p'),
+            'EventName': row.event_name,
+            'SeatNo': row.seat_number,
+            'SeatCategory': row.seat_category,  
+            'Status': 'upcoming' if row.event_date > datetime.now() else 'finished'  
+        }
+        ticket_details.append(ticket_info)
+
+        # Transaction details without seat category (just amount and status)
+        transaction_info = {
+            'TranscID': row.transaction_id,
+            'TransDate': row.transaction_date.strftime('%d-%m-%Y %I:%M%p'),
+            'EventName': row.event_name,
+            'SeatNo': row.seat_number,
+            'Amount': row.transaction_amount,
+            'Status': row.transaction_status
+        }
+        transaction_details.append(transaction_info)
+
+    return render_template('myticket.html', ticket_details=ticket_details, transaction_details=transaction_details)
 
 @app.route('/ticket/<event_id>')
 def ticket(event_id):
@@ -866,11 +893,12 @@ def get_event_data():
     return jsonify({'ticket_sales_data': ticket_sales_data, 'revenue_data': revenue_data})
 
 
+
 @app.route('/profile/<int:user_id>', methods=['GET', 'POST'])
 def profile(user_id):
     user = Users.query.get_or_404(user_id)
     payment_method = PaymentMethod.query.filter_by(UserID=user_id).first()
-
+    current_year = datetime.now().year
     # If no payment method exists, provide placeholders for template
     if payment_method is None:
         payment_method = {
@@ -881,7 +909,7 @@ def profile(user_id):
             'CVV': '000'  
         }
 
-    return render_template('profile.html', user=user, paymentMethod=payment_method)
+    return render_template('profile.html', user=user, paymentMethod=payment_method, current_year=current_year)
 
 
 
@@ -929,13 +957,20 @@ def deactivate_account(user_id):
         flash(f'Error deactivating account: {str(e)}', 'danger')
 
     return redirect(url_for('home'))
+
 @app.route('/update_payment/<int:user_id>', methods=['POST'])
 def update_payment(user_id):
     payment_method = PaymentMethod.query.filter_by(UserID=user_id).first()
     
     payment_method.CardHolderName = request.form['cardHolderName']
     payment_method.CardNumber = request.form['cardNumber']
-    payment_method.ExpireDate = datetime.strptime(request.form['expireDate'], '%m/%Y')
+    
+    # Get the month and year from the form and combine them
+    expire_month = request.form['expireDateMonth']
+    expire_year = request.form['expireDateYear']
+    expire_date_str = f"{expire_month}/01/{expire_year}"  # Assuming the first day of the month
+    payment_method.ExpireDate = datetime.strptime(expire_date_str, '%m/%d/%Y')
+    
     payment_method.BillAddr = request.form['billingAddress']
 
     if request.form['cvv'] and request.form['cvv'] != '***':
@@ -952,7 +987,13 @@ def add_payment(user_id):
 
     card_holder_name = request.form['cardHolderName']
     card_number = request.form['cardNumber']
-    expire_date = datetime.strptime(request.form['expireDate'], '%m/%Y')
+    
+    # Get the month and year from the form and combine them
+    expire_month = request.form['expireDateMonth']
+    expire_year = request.form['expireDateYear']
+    expire_date_str = f"{expire_month}/01/{expire_year}"  # Assuming the first day of the month
+    expire_date = datetime.strptime(expire_date_str, '%m/%d/%Y')
+    
     billing_address = request.form['billingAddress']
     cvv = request.form['cvv']
 
@@ -971,6 +1012,7 @@ def add_payment(user_id):
 
     flash('Payment method added successfully!', 'success')
     return redirect(url_for('profile', user_id=user_id))
+
 
 
 if __name__ == "__main__":

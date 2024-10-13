@@ -105,27 +105,26 @@
         </div>
 
         <div class="right-side">
-            {% if session.user_id %}
+            {% if session.get('user_id') %}
             <div class="form-container">
                 <h3 class="text-center mb-4">Queue Status</h3>
                 <p>You have entered the Queue, please do not leave this page.</p>
-                <p>Leaving this page would mean exiting the queue</p>
+                <p>Leaving this page would mean exiting the queue.</p>
                 <p>Queue Number: {{ data['QNo'] }}</p>
                 <p>User ID: {{ data['UserID'] }}</p>
                 <p>Event ID: {{ data['EventID'] }}</p>
-
-               
             </div>
             {% endif %}
         </div>
     </main>
 
     {% include 'footer.html' %}
-    <!-- Include jQuery -->
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 
-<!-- Include Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Include jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+    <!-- Include Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         function pauseFor10Seconds() {
@@ -133,11 +132,15 @@
             setTimeout(resolve, 10000);
             });
         }
+
         window.onload = async function() {
             await pauseFor10Seconds();
-            window.location.href = "{{ url_for('inqueue', event_id=event.EventID, queue_id= data['UserID']) }}";
-        };
 
+            // Check if event and data variables are defined
+            if ({{ event.EventID | tojson }} && {{ data['UserID'] | tojson }}) {
+                window.location.href = "{{ url_for('inqueue', event_id=event.EventID, queue_id= data['UserID']) }}";
+            }
+        };
     </script>
 </body>
 </html>
