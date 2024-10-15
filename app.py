@@ -94,7 +94,7 @@ with app.app_context():
     except Exception as e:
         logging.error(f"Error during index creation: {e}\n{traceback.format_exc()}")
 
-
+ 
 # Routes
 @app.route('/')
 def home():
@@ -1114,4 +1114,4 @@ def delete_payment(user_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=443, ssl_context=('certificate.crt', 'private.key'))
