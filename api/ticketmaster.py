@@ -78,16 +78,17 @@ def parse_datetime(date_str):
 
 def store_event(event_data):  
     try:  
-        # event_type = event_data['classifications'][0]['segment']['name'] if 'classifications' in event_data and event_data['classifications'] else 'Undefined'
+        event_type = event_data['classifications'][0]['segment']['name'] if 'classifications' in event_data and event_data['classifications'] else 'Undefined'
         # event_date_str = event_data['dates']['start']['dateTime']
         # if event_date_str.endswith('Z'):  # Checks if the string ends with 'Z'
         #     event_date_str = event_date_str[:-1] + '+00:00'  # Replace 'Z' with '+00:00' which is the offset notation for UTC
+        
         event_date = parse_datetime(event_data['dates']['start']['dateTime'])
                 
         event = Event(
             EventID=event_data['id'],
             EventName=event_data['name'],
-            EEventDate=event_date,
+            EventDate=event_date,
             EventType=event_type,
             LocationID=event_data['_embedded']['venues'][0]['id'],
         )
