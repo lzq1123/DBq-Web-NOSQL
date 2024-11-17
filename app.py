@@ -13,8 +13,11 @@ import calendar
 from models import db, Users, PaymentMethod, Location, Event, Ticket, TicketCategory, Transactions, Image, Queue
 from werkzeug.security import generate_password_hash 
 from sqlalchemy.exc import IntegrityError
+from flask_caching import Cache
+from sqlalchemy.orm import load_only
 
 app = Flask(__name__, static_folder='static')
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 app.config['SECRET_KEY'] = Config.APP_SECRET_KEY
 app.config.from_object(Config)
 db.init_app(app)
@@ -97,97 +100,108 @@ with app.app_context():
  
 # Routes
 @app.route('/')
+@cache.cached(timeout=300)
 def home():
     preferred_width = 1920
 
-    # Query to fetch events with the most transactions
-    hot_events_info = db.session.query(
-        Event.EventID,
-        Event.EventName,
-        func.count(Transactions.TranscID).label('transaction_count')
-    ).join(Event.ticketCategory) \
-      .join(TicketCategory.ticket) \
-      .join(Ticket.transaction) \
-      .group_by(Event.EventID) \
-      .order_by(func.count(Transactions.TranscID).desc()) \
-      .limit(6) \
-      .all()
-
-      # Check if enough events were fetched
-    if len(hot_events_info) < 6:
-        # Fetch more events to make the total count 6
-        additional_events_needed = 6 - len(hot_events_info)
-        more_events = Event.query \
-            .filter(Event.EventID.notin_([event.EventID for event in hot_events_info])) \
-            .limit(additional_events_needed) \
-            .all()
-        hot_events_info.extend([(event.EventID, event.EventName, 0) for event in more_events])
-
-    # Prepare data to render
-    hot_events = []
-    for event_info in hot_events_info:
-        event_id, event_name, _ = event_info
-        event = Event.query.options(joinedload(Event.image)).filter_by(EventID=event_id).first()
-        if event.image:
-            event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
-            image_url = event.preferred_image.URL
-        else:
-            image_url = url_for('static', filename='images/default.jpg')
-
-        hot_events.append({
-            'EventID': event_id,
-            'EventName': event_name,
-            'ImageURL': image_url
-        })
-
-    # Fetch the most popular venues based on the number of associated events
-    top_venues_query = db.session.query(
-        Location.LocationID,
-        Location.VenueName,
-        db.func.count(Event.EventID).label('event_count'),
-    ).join(Location.event) \
-     .outerjoin(Location.image) \
-     .group_by(Location.LocationID) \
-     .order_by(db.func.count(Event.EventID).desc()) \
-     .limit(6)
-
-    top_venues = top_venues_query.all()
-
-    # Ensure there are 6 venues
-    if len(top_venues) < 6:
-        additional_venues_needed = 6 - len(top_venues)
-        additional_venues = Location.query \
-            .filter(Location.LocationID.notin_([venue.LocationID for venue in top_venues])) \
-            .limit(additional_venues_needed) \
-            .all()
-        top_venues.extend([(venue.LocationID, venue.VenueName, 0, None) for venue in additional_venues])
-
-    # Format the fetched venues
-    formatted_venues = []
-    for venue in top_venues:
-        location_id, venue_name, event_count = venue
-        location = Location.query.options(joinedload(Location.image)).filter_by(LocationID=location_id).first()
-        if location.image:
-            # Choosing the best image based on width preference
-            preferred_image = min(location.image, key=lambda img: abs(img.Width - preferred_width))
-            image_url = preferred_image.URL
-        else:
-            image_url = url_for('static', filename='images/default.jpg')
+    try:
+        # Start a new transaction
+        db.session.begin()
         
-        formatted_venues.append({
-            'LocationID': location_id,
-            'VenueName': venue_name,
-            'ImageURL': image_url
-        })
+        # Query to fetch events with the most transactions
+        hot_events_info = db.session.query(
+            Event.EventID,
+            Event.EventName,
+            func.count(Transactions.TranscID).label('transaction_count')
+        ).join(Event.ticketCategory) \
+         .join(TicketCategory.ticket) \
+         .join(Ticket.transaction) \
+         .group_by(Event.EventID) \
+         .order_by(func.count(Transactions.TranscID).desc()) \
+         .limit(6) \
+         .all()
+
+        # Check if enough events were fetched
+        if len(hot_events_info) < 6:
+            # Fetch more events to make the total count 6
+            event_ids = [event[0] for event in hot_events_info]  # Adjusted to use tuple indexing
+            more_events = Event.query \
+                .filter(~Event.EventID.in_(event_ids)) \
+                .limit(6 - len(hot_events_info)) \
+                .all()
+            hot_events_info.extend([(event.EventID, event.EventName, 0) for event in more_events])
+
+        # Prepare data to render
+        hot_events = []
+        for event in hot_events_info:
+            event_id, event_name, _ = event  # Adjusted to tuple unpacking
+            event_details = Event.query.options(joinedload(Event.image)).filter_by(EventID=event_id).first()
+            if event_details.image:
+                preferred_image = min(event_details.image, key=lambda img: abs(img.Width - preferred_width))
+                image_url = preferred_image.URL
+            else:
+                image_url = url_for('static', filename='images/default.jpg')
+
+            hot_events.append({
+                'EventID': event_id,
+                'EventName': event_name,
+                'ImageURL': image_url
+            })
+
+        # Fetch the most popular venues based on the number of associated events
+        top_venues_info = db.session.query(
+            Location.LocationID,
+            Location.VenueName,
+            func.count(Event.EventID).label('event_count'),
+        ).join(Location.event) \
+         .outerjoin(Location.image) \
+         .group_by(Location.LocationID) \
+         .order_by(func.count(Event.EventID).desc()) \
+         .limit(6) \
+         .all()
+
+        # Ensure there are 6 venues
+        if len(top_venues_info) < 6:
+            additional_venues_needed = 6 - len(top_venues_info)
+            additional_venues = Location.query \
+                .filter(Location.LocationID.notin_([venue.LocationID for venue in top_venues_info])) \
+                .limit(additional_venues_needed) \
+                .all()
+            top_venues_info.extend([(venue.LocationID, venue.VenueName, 0, None) for venue in additional_venues])
+
+        # Format the fetched venues
+        formatted_venues = []
+        for venue in top_venues_info:
+            location = Location.query.options(joinedload(Location.image)).filter_by(LocationID=venue.LocationID).first()
+            if location.image:
+                # Choosing the best image based on width preference
+                preferred_image = min(location.image, key=lambda img: abs(img.Width - 1920))
+                image_url = preferred_image.URL
+            else:
+                image_url = url_for('static', filename='images/default.jpg')
+
+            formatted_venues.append({
+                'LocationID': location.LocationID,
+                'VenueName': venue.VenueName,
+                'ImageURL': image_url
+            })
+
+        # Commit transaction
+        db.session.commit()
+    
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error fetching home page data: {e}")
+        return render_template('error.html', message="Failed to load data.")
 
     return render_template('landing.html', hot_events=hot_events, venues=formatted_venues)
 
 @app.route('/event')
 def event():
-    search_query = request.args.get('search', '').lower() 
-    search_month = request.args.get('search_month')  
-    page = request.args.get('page', 1, type=int)  
-    events_per_page = 9  
+    search_query = request.args.get('search', '').lower()
+    search_month = request.args.get('search_month')
+    page = request.args.get('page', 1, type=int)
+    events_per_page = 9
     events_by_month_year = {}
     preferred_width = 1920
     search_date_parsed = None
@@ -196,40 +210,53 @@ def event():
         try:
             search_date_parsed = datetime.strptime(search_month, '%Y-%m')
         except ValueError:
-            search_date_parsed = None  
+            search_date_parsed = None
 
-    base_query = Event.query.options(joinedload(Event.image)).order_by(Event.EventDate)
+    try:
+        # Start a transaction
+        db.session.begin()
 
-    if search_query and search_date_parsed:
-        base_query = base_query.filter(
-            and_(
-                Event.EventName.ilike(f'%{search_query}%'),
-                Event.EventDate.between(search_date_parsed.replace(day=1),
-                                        search_date_parsed.replace(day=calendar.monthrange(search_date_parsed.year, search_date_parsed.month)[1]))
+        base_query = Event.query.options(joinedload(Event.image)).order_by(Event.EventDate)
+        
+        if search_query and search_date_parsed:
+            base_query = base_query.filter(
+                and_(
+                    Event.EventName.ilike(f'%{search_query}%'),
+                    Event.EventDate.between(
+                        search_date_parsed.replace(day=1),
+                        search_date_parsed.replace(day=calendar.monthrange(search_date_parsed.year, search_date_parsed.month)[1])
+                    )
+                )
             )
-        )
-    elif search_query:
-        base_query = base_query.filter(Event.EventName.ilike(f'%{search_query}%'))
-    elif search_date_parsed:
-        base_query = base_query.filter(
-            Event.EventDate.between(search_date_parsed.replace(day=1),
-                                    search_date_parsed.replace(day=calendar.monthrange(search_date_parsed.year, search_date_parsed.month)[1]))
-        )
+        elif search_query:
+            base_query = base_query.filter(Event.EventName.ilike(f'%{search_query}%'))
+        elif search_date_parsed:
+            base_query = base_query.filter(
+                Event.EventDate.between(
+                    search_date_parsed.replace(day=1),
+                    search_date_parsed.replace(day=calendar.monthrange(search_date_parsed.year, search_date_parsed.month)[1])
+                )
+            )
 
-    # Pagination
-    paginated_events = base_query.paginate(page=page, per_page=events_per_page)
+        # Pagination
+        paginated_events = base_query.paginate(page=page, per_page=events_per_page, error_out=False)
 
-    for event in paginated_events.items:
-        if event.image:
-            event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
-        else:
-            event.preferred_image = None
+        for event in paginated_events.items:
+            if event.image:
+                event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
+            else:
+                event.preferred_image = None
 
-        # Group events by month and year
-        month_year = f"{calendar.month_name[event.EventDate.month]} {event.EventDate.year}"
-        if month_year not in events_by_month_year:
-            events_by_month_year[month_year] = []
-        events_by_month_year[month_year].append(event)
+            month_year = f"{calendar.month_name[event.EventDate.month]} {event.EventDate.year}"
+            if month_year not in events_by_month_year:
+                events_by_month_year[month_year] = []
+            events_by_month_year[month_year].append(event)
+
+        db.session.commit()
+
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error fetching events data: {e}")
 
     sorted_month_years = sorted(
         events_by_month_year.keys(),
@@ -240,7 +267,7 @@ def event():
         'event.html',
         events_by_month_year={key: events_by_month_year[key] for key in sorted_month_years},
         search_query=search_query,
-        search_month=search_month, 
+        search_month=search_month,
         current_page=page,
         total_pages=paginated_events.pages
     )
@@ -250,52 +277,62 @@ def venue():
     preferred_width = 1920
     page = request.args.get('page', 1, type=int)
     per_page = 12
-
-    search_query = request.args.get('search', '')
+    search_query = request.args.get('search', '').lower()
 
     offset = (page - 1) * per_page
 
-    sql_query = """
-        SELECT "Location"."LocationID", "Location"."VenueName", "Location"."Address", "Location"."Country", "State", "PostalCode", 
-        "Image"."URL", "Image"."Width" 
-        FROM "Location" 
-        LEFT JOIN "Image" ON "Location"."LocationID" = "Image"."LocationID"
-        WHERE (:search_query = '' OR "Location"."VenueName" ILIKE :search_query)
-        LIMIT :per_page OFFSET :offset
-    """
+    try:
+        # Start a transaction
+        db.session.begin()
 
-    locations = db.session.execute(
-        text(sql_query),
-        {
-            'search_query': f"%{search_query}%" if search_query else '',
-            'per_page': per_page,
-            'offset': offset
-        }
-    ).fetchall()
+        sql_query = """
+            SELECT "Location"."LocationID", "Location"."VenueName", "Location"."Address", "Location"."Country", "State", "PostalCode", 
+            "Image"."URL", "Image"."Width" 
+            FROM "Location" 
+            LEFT JOIN "Image" ON "Location"."LocationID" = "Image"."LocationID"
+            WHERE (:search_query = '' OR "Location"."VenueName" ILIKE :search_query)
+            LIMIT :per_page OFFSET :offset
+        """
+        
+        locations = db.session.execute(
+            text(sql_query),
+            {
+                'search_query': f"%{search_query}%" if search_query else '',
+                'per_page': per_page,
+                'offset': offset
+            }
+        ).fetchall()
 
-    venues_with_images = []
+        venues_with_images = []
 
-    for location in locations:
-        venue = {
-            'LocationID': location.LocationID,
-            'VenueName': location.VenueName,  # Ensure the VenueName is passed
-            'Address': location.Address,
-            'Country': location.Country,
-            'State': location.State,
-            'PostalCode': location.PostalCode,
-            'ImageURL': location.URL if location.URL else 'static/images/venue1.jpg'
-        }
-        venues_with_images.append(venue)
+        for location in locations:
+            venue = {
+                'LocationID': location.LocationID,
+                'VenueName': location.VenueName,
+                'Address': location.Address,
+                'Country': location.Country,
+                'State': location.State,
+                'PostalCode': location.PostalCode,
+                'ImageURL': location.URL if location.URL else 'static/images/venue1.jpg'
+            }
+            venues_with_images.append(venue)
 
-    count_query = """
-        SELECT COUNT(*) 
-        FROM "Location" 
-        WHERE (:search_query = '' OR "Location"."VenueName" ILIKE :search_query)
-    """
-    total_venues = db.session.execute(
-        text(count_query),
-        {'search_query': f"%{search_query}%" if search_query else ''}
-    ).scalar()
+        count_query = """
+            SELECT COUNT(*) 
+            FROM "Location" 
+            WHERE (:search_query = '' OR "Location"."VenueName" ILIKE :search_query)
+        """
+        total_venues = db.session.execute(
+            text(count_query),
+            {'search_query': f"%{search_query}%" if search_query else ''}
+        ).scalar()
+
+        db.session.commit()
+
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error fetching venue data: {e}")
+        return render_template('error.html', message="Failed to load venue data."), 500
 
     total_pages = (total_venues + per_page - 1) // per_page
     pagination = {
@@ -311,11 +348,23 @@ def venue():
 
 @app.route('/venueinfo/<LocationID>')
 def venueinfo(LocationID):
-    venue = Location.query.filter_by(LocationID=LocationID).first()
-    if not venue:
-        return "Venue not found", 404
+    try:
 
-    image_url = venue.image[0].URL if venue.image else 'static/images/venue1.jpg'  # Use a default image if none is found
+        db.session.begin()
+
+        venue = Location.query.filter_by(LocationID=LocationID).first()
+
+        db.session.commit()
+
+        if not venue:
+            return "Venue not found", 404
+
+        image_url = venue.image[0].URL if venue.image else url_for('static', filename='images/venue1.jpg')
+
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error during transaction: {e}")
+        return render_template('error.html', message="Failed to load venue data."), 500
 
     return render_template('venueinfo.html', venue=venue, image_url=image_url)
 
@@ -333,34 +382,44 @@ def register():
     if registration_form.validate_on_submit():
         email = registration_form.email.data
 
-        # Check if email already exists in the database
-        existing_user = Users.query.filter_by(Email=email).first()
-        
-        if existing_user:
-            # If email exists, return an error message
-            error_message = 'Email already registered.'
-            return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
-
-        # If email doesn't exist, proceed to create new user
-        hashed_password = bcrypt.hashpw(registration_form.password.data.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        new_user = Users(
-            Name=registration_form.name.data,
-            Email=email,
-            Password=hashed_password,
-            Phone=registration_form.phone.data
-        )
+        db.session.begin()
 
         try:
+            # Check if email already exists in the database with a lock
+            existing_user = Users.query.filter_by(Email=email).with_for_update().first()
+            
+            if existing_user:
+                # If email exists, return an error message
+                db.session.rollback()
+                error_message = 'Email already registered.'
+                return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
+
+            # If email doesn't exist, proceed to create new user
+            hashed_password = bcrypt.hashpw(registration_form.password.data.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            new_user = Users(
+                Name=registration_form.name.data,
+                Email=email,
+                Password=hashed_password,
+                Phone=registration_form.phone.data
+            )
+
             db.session.add(new_user)
-            db.session.commit()
+            db.session.commit()  # Commit the transaction
+
+            # Success message
+            error_message = 'You have successfully registered!'
+            return render_template('landing.html', error_message=error_message)
+
         except IntegrityError:
-            db.session.rollback()  # Rollback the session if there's a database error
+            db.session.rollback()  # Rollback the transaction if there's a database error
             error_message = 'A database error occurred. Please try again.'
             return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
 
-        # Success message
-        error_message = 'You have successfully registered!'
-        return render_template('landing.html', error_message=error_message)
+        except Exception as e:
+            db.session.rollback()  # Ensure to rollback on any exception
+            logging.error(f"Unexpected error: {e}")
+            error_message = 'An unexpected error occurred. Please try again.'
+            return render_template('registersignup.html', registration_form=registration_form, login_form=login_form, error_message=error_message)
 
     else:
         # Log form errors for debugging
@@ -384,22 +443,30 @@ def login():
     password = login_form.password.data
     
     if login_form.validate_on_submit():
-        user = Users.query.filter_by(Email=email).first()
+        try:
+            # Start a transaction
+            db.session.begin()
+            user = Users.query.filter_by(Email=email).first()
+            db.session.commit()
 
-        if user and bcrypt.checkpw(login_form.password.data.encode('utf-8'), user.Password.encode('utf-8')):
-            session['user_id'] = user.UserID
-            error_message = 'Login successful!'
-            return render_template('landing.html', error_message=error_message)
-        else:
-            error_message = 'Invalid email or password'
+            if user and bcrypt.checkpw(password.encode('utf-8'), user.Password.encode('utf-8')):
+                session['user_id'] = user.UserID
+                error_message = 'Login successful!'
+                return render_template('landing.html', error_message=error_message)
+            else:
+                error_message = 'Invalid email or password'
+                return render_template('registersignup.html', login_form=login_form, registration_form=registration_form, error_message=error_message)
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Transaction failed: {e}")
+            error_message = 'Login failed due to internal error.'
             return render_template('registersignup.html', login_form=login_form, registration_form=registration_form, error_message=error_message)
     else:
-        logging.error("Form Errors:", login_form.errors) 
+        error_message = 'Validation errors occurred: '
         for fieldName, errorMessages in login_form.errors.items():
             for err in errorMessages:
                 error_message += f'{fieldName}: {err} '
-
-    return render_template('registersignup.html', login_form=login_form, registration_form=registration_form, error_message=error_message) 
+        return render_template('registersignup.html', login_form=login_form, registration_form=registration_form, error_message=error_message)
 
 @app.route('/logout')
 def logout():
@@ -471,35 +538,52 @@ def ticket(event_id):
 
     # Get user info from session
     user_id = session.get('user_id')
-    user = Users.query.get(user_id)
-    event = Event.query.options(joinedload(Event.image), joinedload(Event.ticketCategory)).filter_by(EventID=event_id).first()
+    if not user_id:
+        return redirect(url_for('registersignup'))
+    try:
 
-    if not event:
-        return redirect(url_for('landing'))
+        db.session.begin()
 
-    # Determine ticket availability
-    tickets_available = any(
-        category.SeatsAvailable > Ticket.query.filter_by(CatID=category.CatID).count()
-        for category in event.ticketCategory
-    )
+        user = Users.query.get(user_id)
+        event = Event.query.options(joinedload(Event.image), joinedload(Event.ticketCategory)).filter_by(EventID=event_id).first()
 
-    # Choose preferred image based on width
-    if event.image:
-        event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
-    else:
-        image_url = url_for('static', filename='images/default.jpg')
+        if not event:
+            db.session.rollback() 
+            return redirect(url_for('landing'))
 
-    # Prepare event and user information for the template
-    event_image = {
-        'ImageURL': event.preferred_image.URL if event.preferred_image else url_for('static', filename='images/default.jpg')
-    }
-    return render_template('ticket.html', 
-                           event=event,
-                           calendar=calendar,
-                           event_image=event_image,
-                           user=user,
-                           tickets_available=tickets_available,
-                           payment_method=PaymentMethod.query.filter_by(UserID=user_id).first())
+        # Determine ticket availability with row locking
+        ticket_categories = TicketCategory.query.filter(TicketCategory.EventID == event_id).with_for_update().all()
+        tickets_available = any(
+            category.SeatsAvailable > Ticket.query.filter_by(CatID=category.CatID).count()
+            for category in ticket_categories
+        )
+
+        if not tickets_available:
+            db.session.rollback()  # Rollback if no tickets available
+            return redirect(url_for('event', event_id=event_id))
+
+        # Choose preferred image based on width
+        if event.image:
+            event.preferred_image = min(event.image, key=lambda img: abs(img.Width - preferred_width))
+        else:
+            image_url = url_for('static', filename='images/default.jpg')
+
+        db.session.commit()
+
+        # Prepare event and user information for the template
+        event_image = {
+            'ImageURL': event.preferred_image.URL if event.preferred_image else url_for('static', filename='images/default.jpg')
+        }
+        return render_template('ticket.html', 
+                            event=event,
+                            calendar=calendar,
+                            event_image=event_image,
+                            user=user,
+                            tickets_available=tickets_available,
+                            payment_method=PaymentMethod.query.filter_by(UserID=user_id).first())
+    except Exception as e:
+        db.session.rollback()  # Rollback on any SQLAlchemy error
+        return render_template('error.html', message=str(e))
 
 
 @app.route('/ticket_purchase/<event_id>', methods=['POST'])
@@ -509,25 +593,29 @@ def ticket_purchase(event_id):
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('registersignup')) 
-    
-    event = Event.query.filter_by(EventID=event_id).first()
-    if not event:
-        return redirect(url_for('landing'))
-    
-    ticket_categories = event.ticketCategory
-    if not ticket_categories:
-        return redirect(url_for('event', event_id=event_id))
-    
+
+    db.session.begin()
+
     try:
+        event = Event.query.filter_by(EventID=event_id).first()
+        if not event:
+                db.session.rollback()
+                return redirect(url_for('landing'))
+        
+        # Lock the ticket categories associated with the event to prevent other transactions from modifying them simultaneously
+        ticket_categories = TicketCategory.query.filter_by(EventID=event_id).with_for_update().all()
+        if not ticket_categories:
+            db.session.rollback()
+            return redirect(url_for('event', event_id=event_id))
+    
         category_id = request.form.get('category')
         quantity = int(request.form.get('quantity'))
         ticket_category = TicketCategory.query.get(category_id)
 
         if not ticket_category:
-            # flash('Ticket category not found.', 'error')
-            return redirect(url_for('event', event_id=event_id))        
-        # elif ticket_category.SeatsAvailable < quantity:
-        #     flash('Not enough tickets available', 'error')
+            db.session.rollback()
+            flash('Not enough tickets available or category not found.', 'error')
+            return redirect(url_for('event', event_id=event_id))
 
         cardholder_name = request.form.get('cardholder-name')
         card_number = request.form.get('card-number')
@@ -555,8 +643,6 @@ def ticket_purchase(event_id):
                 CardHolderName=cardholder_name
             )
             db.session.add(payment_method)
-
-        db.session.commit()
 
         # Create transaction
         total_price = ticket_category.CatPrice * quantity
